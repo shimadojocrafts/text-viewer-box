@@ -994,6 +994,64 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
   }
 }
 
+
+/* ===== Reader horizontal balance fix 2026-07-03 v5 =====
+   横書きで本文スペースを広げつつ、移動ボタンは本文の下に自然に置く。
+   sticky指定を外して、画面全体スクロールで見える形に戻す。 */
+.reader-screen.mode-horizontal {
+  height: auto !important;
+  min-height: 100dvh !important;
+  overflow: visible !important;
+  grid-template-rows: auto auto auto auto auto !important;
+  gap: 10px !important;
+  padding-bottom: calc(34px + var(--safe-bottom)) !important;
+}
+.reader-screen.mode-horizontal .reader-minimal-card {
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+.reader-screen.mode-horizontal .reader.horizontal {
+  height: auto !important;
+  min-height: 56dvh !important;
+  max-height: min(68dvh, 760px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+}
+.reader-screen.mode-horizontal .reader-nav-card {
+  display: block !important;
+  position: relative !important;
+  bottom: auto !important;
+  z-index: 20 !important;
+  margin-top: 12px !important;
+  margin-bottom: calc(30px + var(--safe-bottom)) !important;
+  align-self: stretch !important;
+  background: rgba(255,255,255,.96) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+@media (max-width: 520px) {
+  .reader-screen.mode-horizontal {
+    gap: 9px !important;
+    padding-inline: 10px !important;
+    padding-bottom: calc(38px + var(--safe-bottom)) !important;
+  }
+  .reader-screen.mode-horizontal .reader.horizontal {
+    min-height: 55dvh !important;
+    max-height: 61dvh !important;
+    border-radius: 14px !important;
+  }
+  .reader-screen.mode-horizontal .reader-nav-card {
+    position: relative !important;
+    bottom: auto !important;
+    margin-top: 12px !important;
+    margin-bottom: calc(32px + var(--safe-bottom)) !important;
+    padding: 8px !important;
+    border-radius: 18px !important;
+  }
+}
+
 </style>
 </head>
 <body>
