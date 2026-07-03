@@ -864,6 +864,66 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
   }
 }
 
+
+/* ===== Reader horizontal layout fix 2:横読みだけ画面全体スクロールを復活 =====
+   横読みでは本文カードを一定高さのスクロール枠にしつつ、画面全体も下へスクロール可能にする。
+   これで下の前/次ページボタンがiPhoneのホームバーや本文に被らない。 */
+.main-app.reader-mode .content {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+.reader-screen.mode-horizontal {
+  height: auto !important;
+  min-height: 100dvh !important;
+  overflow: visible !important;
+  grid-template-rows: auto auto auto auto auto !important;
+  padding-bottom: calc(24px + var(--safe-bottom)) !important;
+}
+.reader-screen.mode-horizontal .reader-minimal-card {
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+.reader-screen.mode-horizontal .reader.horizontal {
+  height: auto !important;
+  min-height: 42dvh !important;
+  max-height: min(64dvh, 720px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding-bottom: clamp(28px, 5vw, 56px) !important;
+  box-sizing: border-box !important;
+}
+.reader-screen.mode-horizontal .reader-nav-card {
+  position: relative !important;
+  inset: auto !important;
+  transform: none !important;
+  margin-top: 8px !important;
+  margin-bottom: calc(18px + var(--safe-bottom)) !important;
+  flex-shrink: 0 !important;
+}
+@media (max-width: 520px) {
+  .reader-screen.mode-horizontal {
+    gap: 8px !important;
+    padding-inline: 10px !important;
+    padding-bottom: calc(26px + var(--safe-bottom)) !important;
+  }
+  .reader-screen.mode-horizontal .reader.horizontal {
+    min-height: 48dvh !important;
+    max-height: 58dvh !important;
+    border-radius: 14px !important;
+  }
+  .reader-screen.mode-horizontal .reader-nav-card {
+    margin-top: 8px !important;
+    margin-bottom: calc(22px + var(--safe-bottom)) !important;
+  }
+  .reader-screen.mode-horizontal .reader-nav-grid {
+    grid-template-columns: auto minmax(0, 1fr) !important;
+  }
+  .reader-screen.mode-horizontal .reader-branch-list {
+    justify-content: flex-end !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -942,13 +1002,13 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
   // ここは Firebase と同じ名前の firebaseConfig でOKです。
   // 空欄のままなら端末内保存だけで動きます。
   const firebaseConfig = {
-  apiKey: "AIzaSyCwwAoxcRQbbbtGl0ow_OM2AnSQAD-mZuk",
-  authDomain: "my-private-library-d44cf.firebaseapp.com",
-  projectId: "my-private-library-d44cf",
-  storageBucket: "my-private-library-d44cf.firebasestorage.app",
-  messagingSenderId: "1061524139746",
-  appId: "1:1061524139746:web:0dbebed247398cf7f5f8bb"
-};
+    apiKey: '',
+    authDomain: '',
+    projectId: '',
+    storageBucket: '',
+    messagingSenderId: '',
+    appId: ''
+  };
   const FIREBASE_CONFIG = firebaseConfig;
 
   const CLOUD_DOC_ID = 'default';
