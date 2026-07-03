@@ -924,6 +924,76 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
   }
 }
 
+
+/* ===== Reader horizontal layout final polish 2026-07-03 =====
+   横書き時の移動ボタンを画面下ギリギリから少し上に逃がし、
+   本文カードの高さもスマホでは控えめにして見た目の被りを防ぐ。 */
+.main-app.reader-mode .content {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+.reader-screen.mode-horizontal {
+  height: auto !important;
+  min-height: 100dvh !important;
+  overflow: visible !important;
+  grid-template-rows: auto auto auto auto auto !important;
+  gap: 10px !important;
+  padding-bottom: calc(74px + var(--safe-bottom)) !important;
+}
+.reader-screen.mode-horizontal .reader-minimal-card {
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+.reader-screen.mode-horizontal .reader.horizontal {
+  height: auto !important;
+  min-height: min(48dvh, 440px) !important;
+  max-height: min(62dvh, 720px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+}
+.reader-screen.mode-horizontal .reader-nav-card {
+  display: block !important;
+  position: sticky !important;
+  bottom: calc(22px + var(--safe-bottom)) !important;
+  z-index: 30 !important;
+  margin-top: 10px !important;
+  margin-bottom: 0 !important;
+  align-self: stretch !important;
+  background: rgba(255,255,255,.96) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+@media (max-width: 520px) {
+  .reader-screen.mode-horizontal {
+    gap: 8px !important;
+    padding-inline: 10px !important;
+    padding-bottom: calc(84px + var(--safe-bottom)) !important;
+  }
+  .reader-screen.mode-horizontal .reader.horizontal {
+    min-height: 40dvh !important;
+    max-height: min(50dvh, calc(100dvh - 390px)) !important;
+    border-radius: 14px !important;
+  }
+  .reader-screen.mode-horizontal .reader-nav-card {
+    bottom: calc(26px + var(--safe-bottom)) !important;
+    padding: 8px !important;
+    border-radius: 18px !important;
+  }
+  .reader-screen.mode-horizontal .reader-nav-grid {
+    grid-template-columns: auto minmax(0, 1fr) !important;
+    gap: 8px !important;
+  }
+  .reader-screen.mode-horizontal .reader-branch-list {
+    justify-content: flex-end !important;
+  }
+  .reader-screen.mode-horizontal .reader-branch-list button,
+  .reader-screen.mode-horizontal .reader-nav-grid > div:first-child button {
+    min-height: 46px !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1002,13 +1072,13 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
   // ここは Firebase と同じ名前の firebaseConfig でOKです。
   // 空欄のままなら端末内保存だけで動きます。
   const firebaseConfig = {
-  apiKey: "AIzaSyCwwAoxcRQbbbtGl0ow_OM2AnSQAD-mZuk",
-  authDomain: "my-private-library-d44cf.firebaseapp.com",
-  projectId: "my-private-library-d44cf",
-  storageBucket: "my-private-library-d44cf.firebasestorage.app",
-  messagingSenderId: "1061524139746",
-  appId: "1:1061524139746:web:0dbebed247398cf7f5f8bb"
-};
+    apiKey: "AIzaSyCwwAoxcRQbbbtGl0ow_OM2AnSQAD-mZuk",
+    authDomain: "my-private-library-d44cf.firebaseapp.com",
+    projectId: "my-private-library-d44cf",
+    storageBucket: "my-private-library-d44cf.firebasestorage.app",
+    messagingSenderId: "1061524139746",
+    appId: "1:1061524139746:web:0dbebed247398cf7f5f8bb"
+  };
   const FIREBASE_CONFIG = firebaseConfig;
 
   const CLOUD_DOC_ID = 'default';
