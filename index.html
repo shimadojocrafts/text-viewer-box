@@ -1,0 +1,3436 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="小説保管庫">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>小説保管庫</title>
+  <style>
+:root {
+  color-scheme: light;
+  --bg: #f5f5f3;
+  --bg-soft: #fbfbfa;
+  --panel: #ffffff;
+  --panel-2: #f0f0ee;
+  --ink: #0b0b0b;
+  --text: #151515;
+  --muted: #77736d;
+  --muted-2: #9a958d;
+  --line: #dedbd4;
+  --line-strong: #101010;
+  --accent: #111111;
+  --accent-text: #ffffff;
+  --danger: #9f1d1d;
+  --warn: #7a5400;
+  --success: #236b34;
+  --shadow: 0 20px 60px rgba(0, 0, 0, .08);
+  --shadow-soft: 0 12px 32px rgba(0, 0, 0, .055);
+  --radius: 22px;
+  --radius-sm: 14px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; }
+html { min-height: 100%; background: var(--bg); overflow-x: hidden; }
+html, body { margin: 0; color: var(--text); max-width: 100%; overflow-x: hidden; }
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "YuGothic", "Meiryo", sans-serif;
+  line-height: 1.65;
+  -webkit-text-size-adjust: 100%;
+  background:
+    radial-gradient(circle at 9% 0%, rgba(0,0,0,.045), transparent 24rem),
+    linear-gradient(180deg, #fbfbfa 0%, #f3f3f1 42%, #eeeeeb 100%);
+}
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+.hidden { display: none !important; }
+.app-shell.is-loading { opacity: .65; pointer-events: none; }
+::selection { background: #111; color: #fff; }
+
+.lock-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: calc(24px + var(--safe-top)) 18px calc(24px + var(--safe-bottom));
+  background:
+    radial-gradient(circle at top left, rgba(0,0,0,.10), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(0,0,0,.06), transparent 35%),
+    linear-gradient(135deg, #ffffff, #efefed);
+}
+.lock-card {
+  width: min(440px, 100%);
+  background: rgba(255, 255, 255, .88);
+  border: 1px solid rgba(0,0,0,.10);
+  border-radius: 32px;
+  box-shadow: 0 28px 90px rgba(0,0,0,.13);
+  padding: 32px;
+  backdrop-filter: blur(18px);
+}
+.app-mark {
+  width: 58px; height: 58px;
+  border-radius: 20px;
+  background: #111; color: #fff;
+  display: grid; place-items: center;
+  font-weight: 900; font-size: 26px;
+  margin-bottom: 20px;
+  box-shadow: 0 16px 36px rgba(0,0,0,.20);
+}
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: .16em;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+h1, h2, h3 { line-height: 1.25; margin: 0; letter-spacing: -.02em; }
+.lock-card h1 { font-size: 30px; margin-bottom: 8px; }
+.muted { color: var(--muted); }
+.micro { font-size: 12px; }
+.lock-form { display: grid; gap: 11px; margin: 22px 0 10px; }
+
+input, textarea, select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: rgba(255,255,255,.94);
+  color: var(--text);
+  padding: 13px 14px;
+  outline: none;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+textarea { min-height: 140px; resize: vertical; }
+input:focus, textarea:focus, select:focus {
+  border-color: #111;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(0,0,0,.07);
+}
+input::placeholder, textarea::placeholder { color: #aaa49b; }
+
+.primary, .ghost, .text-button, .danger-button, .secondary {
+  border: 1px solid #111;
+  border-radius: 999px;
+  min-height: 39px;
+  padding: 9px 16px;
+  background: #111;
+  color: #fff;
+  font-weight: 850;
+  letter-spacing: -.01em;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: transform .16s ease, box-shadow .16s ease, background .16s ease, border-color .16s ease;
+  box-shadow: 0 8px 18px rgba(0,0,0,.08);
+}
+.primary:hover, .ghost:hover, .secondary:hover, .danger-button:hover { transform: translateY(-1px); }
+.primary:active, .ghost:active, .secondary:active, .danger-button:active { transform: translateY(0); }
+.wide { width: 100%; }
+.ghost { background: #fff; color: #111; box-shadow: none; }
+.secondary { background: #f3f3f1; color: #111; border-color: var(--line); box-shadow: none; }
+.small { min-height: 32px; padding: 6px 12px; font-size: 13px; }
+.text-button {
+  background: transparent;
+  border-color: transparent;
+  color: #111;
+  min-height: auto;
+  padding: 8px 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.text-button:hover { transform: none; text-decoration: underline; text-underline-offset: 4px; }
+.text-button.danger, .danger { color: var(--danger); }
+.danger-button { background: var(--danger); border-color: var(--danger); color: #fff; }
+.icon-button {
+  width: 40px; height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255,255,255,.86);
+  color: #111;
+  font-weight: 900;
+  display: inline-grid;
+  place-items: center;
+}
+
+.main-app { min-height: 100vh; min-height: 100dvh; }
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: calc(13px + var(--safe-top)) 22px 13px;
+  background: rgba(245,245,243,.82);
+  backdrop-filter: blur(20px) saturate(1.25);
+  border-bottom: 1px solid rgba(0,0,0,.075);
+}
+.topbar h1 { font-size: 21px; letter-spacing: -.03em; }
+.menu-button { display: none; }
+.layout {
+  width: min(1280px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  gap: 22px;
+  padding: 22px;
+}
+.side-nav {
+  position: sticky;
+  top: calc(82px + var(--safe-top));
+  align-self: start;
+  background: rgba(255,255,255,.78);
+  border: 1px solid rgba(0,0,0,.09);
+  border-radius: 24px;
+  padding: 9px;
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(14px);
+}
+.nav-item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #2b2b2a;
+  text-align: left;
+  border-radius: 16px;
+  padding: 12px 13px;
+  font-weight: 850;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nav-item::before {
+  content: '';
+  width: 7px; height: 7px;
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  opacity: .52;
+}
+.nav-item.active, .nav-item:hover { background: #111; color: #fff; }
+.nav-item.active::before { background: currentColor; opacity: 1; }
+.content { min-width: 0; padding-bottom: calc(76px + var(--safe-bottom)); }
+
+.view-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.view-head h2 {
+  font-size: clamp(27px, 3.2vw, 40px);
+  font-weight: 950;
+  letter-spacing: -.045em;
+}
+.view-head .muted { margin-top: 6px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+.card {
+  background: rgba(255,255,255,.84);
+  border: 1px solid rgba(0,0,0,.085);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(10px);
+}
+.card.span-12 { grid-column: span 12; }
+.card.span-8 { grid-column: span 8; }
+.card.span-6 { grid-column: span 6; }
+.card.span-4 { grid-column: span 4; }
+.card.span-3 { grid-column: span 3; }
+.card h3 { margin-bottom: 10px; font-size: 17px; font-weight: 950; }
+.stat { font-size: clamp(30px, 4vw, 44px); font-weight: 950; line-height: .95; margin: 10px 0 6px; letter-spacing: -.05em; }
+.list { display: grid; gap: 11px; }
+.item {
+  position: relative;
+  border: 1px solid rgba(0,0,0,.085);
+  border-radius: 18px;
+  background: rgba(255,255,255,.92);
+  padding: 14px;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+  overflow: hidden;
+}
+.item::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: #111;
+  opacity: .08;
+}
+.item:hover { transform: translateY(-1px); box-shadow: 0 14px 34px rgba(0,0,0,.075); border-color: rgba(0,0,0,.18); }
+.item-head { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
+.item-title { font-weight: 950; font-size: 16px; margin: 0 0 3px; letter-spacing: -.02em; }
+.item-sub { color: var(--muted); margin: 0; font-size: 13px; }
+.item-body { margin: 9px 0 0; color: #343331; white-space: pre-wrap; }
+.empty {
+  border: 1px dashed #c5c1ba;
+  border-radius: 22px;
+  padding: 34px 18px;
+  text-align: center;
+  color: var(--muted);
+  background: rgba(255,255,255,.52);
+}
+.tag-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid rgba(0,0,0,.16);
+  color: #111;
+  background: rgba(255,255,255,.92);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 850;
+  box-shadow: none;
+}
+.tag:hover { background: #111; color: #fff; transform: translateY(-1px); }
+.tag.soft { border-color: var(--line); background: #f7f7f5; color: #4b4946; }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 900;
+  background: #111;
+  color: #fff;
+}
+.badge.light { background: #f1f1ef; color: #111; border: 1px solid var(--line); }
+.badge.warn { background: #fff0cc; color: #6a4700; }
+.badge.danger { background: #ffe3e3; color: var(--danger); }
+
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
+.form-grid .full { grid-column: 1 / -1; }
+.check-row { display: flex; flex-direction: row; align-items: center; gap: 10px; font-weight: 850; }
+.check-row input { width: auto; }
+label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
+.help { color: var(--muted); font-size: 12px; font-weight: 400; }
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(0,0,0,.10);
+  border-radius: 999px;
+  background: #f7f7f5;
+}
+.segmented button {
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  padding: 7px 11px;
+  font-weight: 850;
+  color: #3a3937;
+}
+.segmented button.active { background: #111; color: #fff; box-shadow: 0 8px 16px rgba(0,0,0,.12); }
+
+.tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 2px 0 8px;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex: 0 0 auto;
+  border: 1px solid rgba(0,0,0,.10);
+  background: rgba(255,255,255,.86);
+  color: #111;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-weight: 900;
+}
+.tab.active { background: #111; color: #fff; border-color: #111; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; align-items: center; }
+.searchbar { display: flex; gap: 9px; align-items: center; }
+.searchbar input { min-width: min(460px, 100%); }
+.search-result-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 14px 0 10px; }
+.search-excerpt { margin: 8px 0 0; color: #343230; line-height: 1.75; }
+.search-excerpt mark { background: #111; color: #fff; border-radius: 6px; padding: 0 3px; }
+
+
+.shelf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.shelf-card {
+  position: relative;
+  min-height: 210px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: linear-gradient(145deg, rgba(255,255,255,.97), rgba(246,246,244,.92));
+  border: 1px solid rgba(0,0,0,.09);
+  border-radius: 24px;
+  padding: 18px;
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+.shelf-card::after {
+  content: '';
+  position: absolute;
+  inset: auto 18px 0 18px;
+  height: 5px;
+  border-radius: 999px 999px 0 0;
+  background: #111;
+  opacity: .10;
+}
+.shelf-card:hover { transform: translateY(-2px); box-shadow: 0 18px 42px rgba(0,0,0,.09); }
+.shelf-kicker { color: var(--muted); font-size: 11px; font-weight: 900; letter-spacing: .13em; text-transform: uppercase; margin: 0 0 8px; }
+.shelf-title { font-size: 20px; font-weight: 950; letter-spacing: -.04em; line-height: 1.28; margin: 0; }
+.shelf-desc { color: #3c3a36; margin: 10px 0 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.shelf-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; color: var(--muted); font-size: 12px; font-weight: 800; }
+.shelf-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+.shelf-actions.single { grid-template-columns: 1fr; }
+.reader-nav-card { margin-top: 14px; }
+.reader-nav-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; }
+.reader-nav-center { text-align: center; color: var(--muted); font-weight: 850; font-size: 13px; }
+.reader-branch-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.reader-branch-list .primary, .reader-branch-list .ghost { max-width: 100%; }
+.reader-alt-routes { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+.reader-page-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 14px; }
+.reader-page-head .actions { width: auto; }
+.reader-settings-panel {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: max-height .24s ease, opacity .18s ease, transform .18s ease, margin .18s ease;
+  margin: 0;
+}
+.reader-settings-panel.open { max-height: 360px; opacity: 1; transform: translateY(0); margin: 10px 0 14px; }
+.reader-settings-box {
+  border: 1px solid rgba(0,0,0,.09);
+  border-radius: 20px;
+  background: rgba(255,255,255,.88);
+  padding: 12px;
+}
+.reader-setting-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 6px 0; }
+.reader-setting-label { min-width: 72px; color: var(--muted); font-size: 12px; font-weight: 900; }
+.reader-setting-range { display: grid; gap: 4px; min-width: min(260px, 100%); flex: 1 1 190px; }
+.reader-minimal-card { padding: clamp(14px, 2.2vw, 20px); }
+
+.route-list { display: grid; gap: 9px; }
+.route-pill {
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(0,0,0,.10);
+  border-radius: 17px;
+  background: rgba(255,255,255,.92);
+  padding: 11px;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+.route-pill:hover { transform: translateY(-1px); border-color: rgba(0,0,0,.20); }
+.route-pill.active { border-color: #111; box-shadow: inset 0 0 0 1px #111, 0 12px 28px rgba(0,0,0,.06); }
+.page-list { display: grid; gap: 9px; }
+.page-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  text-align: left;
+  border: 1px solid rgba(0,0,0,.10);
+  border-radius: 17px;
+  background: rgba(255,255,255,.92);
+  padding: 10px;
+  cursor: pointer;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+.page-row:hover { transform: translateY(-1px); border-color: rgba(0,0,0,.20); }
+.page-row.active { border-color: #111; box-shadow: inset 0 0 0 1px #111, 0 12px 28px rgba(0,0,0,.06); }
+.page-row-title { font-weight: 950; line-height: 1.35; margin-top: 5px; overflow-wrap: anywhere; }
+.page-row-meta { color: var(--muted); font-size: 12px; font-weight: 800; margin-top: 2px; }
+.page-row-actions { display: flex; flex-direction: column; gap: 5px; }
+.page-row-actions button { padding: 6px 8px; min-width: 34px; }
+.editor-layout { display: grid; grid-template-columns: 292px minmax(0, 1fr); gap: 16px; }
+.editor-textarea {
+  min-height: 58vh;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif;
+  line-height: 1.95;
+  font-size: 16px;
+  border-radius: 22px;
+  padding: 18px;
+  background: #fffdf9;
+}
+
+.reader {
+  min-height: 72vh;
+  border-radius: 26px;
+  border: 1px solid rgba(0,0,0,.10);
+  background: #fff;
+  padding: clamp(22px, 4vw, 48px);
+  overflow: auto;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 18px 52px rgba(0,0,0,.08);
+  scroll-behavior: smooth;
+}
+.reader.ecru { background: #f8f0e3; color: #1a1712; border-color: #e5d9ca; }
+.reader.dark { background: #111; color: #eeeeee; border-color: #222; box-shadow: 0 18px 52px rgba(0,0,0,.18); }
+.reader.gothic { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "YuGothic", "Meiryo", sans-serif; }
+.reader.mincho { font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif; }
+.reader.vertical {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  max-height: 76vh;
+  padding: clamp(22px, 4vw, 44px);
+}
+.reader.horizontal { writing-mode: horizontal-tb; }
+.reader-text { white-space: pre-wrap; margin: 0; letter-spacing: .02em; }
+ .reader.dark .reader-text { color: #efefef; }
+.reader-end-nav { display: none; }
+.reader-end-nav-title { color: var(--muted); font-weight: 850; font-size: .78em; margin: 0 0 1em; }
+.reader-end-nav-buttons { display: flex; gap: .8em; align-items: flex-start; flex-wrap: wrap; }
+.reader.vertical .reader-end-nav {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1.1em;
+  margin-block-start: 2.4em;
+  padding: 1em .8em;
+  border-inline-start: 1px solid rgba(0,0,0,.14);
+  background: rgba(255,255,255,.55);
+  border-radius: 18px;
+  min-height: 12em;
+}
+.reader.vertical.dark .reader-end-nav { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.18); }
+.reader.vertical .reader-end-nav button {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  min-inline-size: 8em;
+  min-block-size: 2.7em;
+  padding: 1em .75em;
+  white-space: nowrap;
+}
+
+.modal {
+  width: min(660px, calc(100% - 24px));
+  border: 0;
+  border-radius: 28px;
+  padding: 0;
+  box-shadow: 0 30px 100px rgba(0,0,0,.26);
+  background: #fff;
+}
+.modal::backdrop { background: rgba(0,0,0,.42); backdrop-filter: blur(6px); }
+.modal-card { padding: 0; margin: 0; }
+.modal-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 20px 20px 0; }
+#modalBody { padding: 15px 20px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 0 20px 20px; flex-wrap: wrap; }
+.toast {
+  position: fixed;
+  left: 50%; bottom: calc(18px + var(--safe-bottom));
+  transform: translate(-50%, 20px);
+  background: #111; color: #fff;
+  border-radius: 999px;
+  padding: 11px 17px;
+  opacity: 0;
+  pointer-events: none;
+  transition: .2s ease;
+  z-index: 50;
+  max-width: calc(100% - 24px);
+  box-shadow: 0 16px 40px rgba(0,0,0,.20);
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+.codebox {
+  width: 100%;
+  min-height: 210px;
+  border-radius: 18px;
+  background: #111;
+  color: #fff;
+  padding: 14px;
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+.file-input { padding: 12px; border: 1px dashed var(--line-strong); border-radius: 16px; background:#fafafa; }
+
+
+/* Reader full-screen mode: reading view uses almost the whole device screen. */
+.main-app.reader-mode .topbar { display: none; }
+.main-app.reader-mode .layout {
+  width: 100%;
+  max-width: none;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  padding: 0;
+}
+.main-app.reader-mode .side-nav { display: none !important; }
+.main-app.reader-mode .content {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 0;
+}
+.reader-screen {
+  width: 100%;
+  max-width: 100vw;
+  min-width: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: max(22px, calc(14px + var(--safe-top))) clamp(10px, 2.4vw, 24px) calc(12px + var(--safe-bottom));
+  overflow: hidden;
+}
+.reader-screen > * { min-width: 0; max-width: 100%; }
+.reader-screen.mode-vertical { grid-template-rows: auto auto auto minmax(0, 1fr); }
+.reader-screen.mode-vertical .reader-page-head {
+  position: relative;
+  z-index: 5;
+  padding: 0 2px;
+}
+.reader-screen.mode-vertical .reader-page-head .actions button,
+.reader-screen.mode-vertical .reader-page-head .text-button {
+  writing-mode: horizontal-tb;
+}
+.reader-screen.mode-vertical .reader-minimal-card { overflow: hidden; }
+.reader-screen.mode-vertical .reader-nav-card { display: none; }
+.reader-screen.mode-vertical .reader.vertical {
+  width: 100%;
+  max-width: 100% !important;
+  height: 100%;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.65), 0 18px 52px rgba(0,0,0,.08);
+}
+.reader-screen.mode-vertical .reader.vertical .reader-text { margin: 0; }
+.reader-screen.mode-vertical .reader-settings-panel.open {
+  max-height: min(360px, 42dvh);
+  overflow: auto;
+}
+.reader-screen .reader-page-head {
+  margin: 0;
+  align-items: center;
+}
+.reader-screen .reader-page-head h2 {
+  font-size: clamp(18px, 3.8vw, 28px);
+  margin-top: 2px;
+}
+.reader-screen .reader-page-head .muted { margin: 2px 0 0; }
+.reader-screen .reader-page-head .actions { flex: 0 0 auto; }
+.reader-screen .reader-settings-panel.open { margin: 0; }
+.reader-screen .reader-alt-routes { margin-top: 0; }
+.reader-screen .reader-minimal-card {
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.reader-screen .reader {
+  width: 100%;
+  max-width: 100% !important;
+  height: 100%;
+  min-height: 0 !important;
+  max-height: none !important;
+  border-radius: 18px;
+  padding: clamp(18px, 4.5vw, 56px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.reader-screen .reader.vertical {
+  max-height: none !important;
+  min-height: 0 !important;
+}
+.reader-screen .reader-nav-card {
+  margin-top: 0;
+  padding: 10px;
+  border-radius: 18px;
+  align-self: end;
+}
+.reader-extra-panels {
+  padding: 0 clamp(10px, 2.4vw, 24px) calc(24px + var(--safe-bottom));
+}
+.main-app.reader-mode .reader-extra-panels { display: none; }
+.reader-screen.mode-vertical + .reader-extra-panels { display: none; }
+.reader-screen.mode-vertical .reader-alt-routes { display: none; }
+.reader-screen .reader-nav-grid { grid-template-columns: auto minmax(0, 1fr) auto; }
+.reader-screen .reader-branch-list { justify-content: flex-end; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 1px; }
+.reader-screen .reader-branch-list button { white-space: nowrap; }
+@media (max-width: 520px) {
+  .reader-screen { grid-template-rows: auto auto auto minmax(0, 1fr) auto; padding-top: max(26px, calc(16px + var(--safe-top))); }
+  .reader-screen .reader-page-head > div:first-child { min-width: 0; }
+  .reader-screen .reader-page-head h2, .reader-screen .reader-page-head .muted { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .reader-screen .reader-page-head .actions { gap: 6px; }
+  .reader-screen .reader-page-head .actions > * { padding: 9px 11px; }
+  .reader-screen .reader-nav-center { display: none; }
+  .reader-screen .reader-nav-grid { grid-template-columns: auto minmax(0, 1fr); }
+  .reader-screen .reader-branch-list { justify-content: flex-end; }
+}
+
+@media (max-width: 860px) {
+  .main-app.reader-mode .content { padding-bottom: 0; }
+  .reader-screen { gap: 8px; padding-inline: 8px; }
+  .reader-screen .reader-page-head { flex-direction: row; align-items: center; gap: 8px; }
+  .reader-screen .reader-page-head h2 { font-size: 18px; }
+  .reader-screen .reader-page-head .muted { font-size: 12px; }
+  .reader-screen .reader-page-head .actions { width: auto; flex-wrap: nowrap; }
+  .reader-screen .reader-page-head .actions > * { flex: 0 0 auto; padding-inline: 12px; }
+  .reader-screen .reader {
+    min-height: 0 !important;
+    height: 100% !important;
+    border-radius: 14px;
+    padding: 18px;
+  }
+  .reader-screen .reader.vertical { min-height: 0 !important; height: 100% !important; }
+  .reader-screen .reader-settings-box { max-height: 42vh; overflow: auto; }
+  .reader-extra-panels { padding-inline: 8px; }
+}
+@media (max-width: 520px) {
+  .reader-screen .reader-page-head .text-button { font-size: 13px; }
+  .reader-screen .reader-page-head h2 { font-size: 17px; }
+  .reader-screen .reader {
+    min-height: 0 !important;
+    height: 100% !important;
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .reader-screen .reader.vertical { min-height: 0 !important; height: 100% !important; }
+  .reader-screen .reader-nav-card { padding: 8px; }
+}
+
+@media (min-width: 1100px) {
+  .card.span-3 { min-height: 132px; }
+}
+
+@media (max-width: 860px) {
+  body { background: #f4f4f2; }
+  .menu-button { display: none; }
+  .topbar { padding: calc(11px + var(--safe-top)) 14px 11px; }
+  .topbar .eyebrow { display: none; }
+  .topbar h1 { font-size: 18px; }
+  .layout { grid-template-columns: 1fr; padding: 14px; gap: 12px; }
+  .side-nav {
+    position: fixed;
+    inset: auto 10px calc(10px + var(--safe-bottom)) 10px;
+    z-index: 40;
+    display: flex !important;
+    gap: 4px;
+    overflow-x: auto;
+    border-radius: 22px;
+    padding: 7px;
+    background: rgba(255,255,255,.88);
+    box-shadow: 0 18px 50px rgba(0,0,0,.18);
+    scrollbar-width: none;
+  }
+  .side-nav::-webkit-scrollbar { display: none; }
+  .side-nav.open { display: flex !important; }
+  .nav-item {
+    width: auto;
+    flex: 0 0 auto;
+    padding: 9px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .nav-item::before { display: none; }
+  .content { padding-bottom: calc(92px + var(--safe-bottom)); }
+  .grid { grid-template-columns: repeat(6, 1fr); gap: 12px; }
+  .card.span-8, .card.span-6, .card.span-4, .card.span-3 { grid-column: span 6; }
+  .editor-layout { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .view-head { flex-direction: column; align-items: stretch; gap: 12px; }
+  .view-head h2 { font-size: 30px; }
+  .actions { width: 100%; }
+  .actions > * { flex: 1 1 auto; }
+  .reader-page-head { flex-direction: column; }
+  .reader-page-head .actions { width: 100%; }
+  .shelf-grid { grid-template-columns: 1fr; }
+  .shelf-actions { grid-template-columns: 1fr; }
+  .reader-nav-grid { grid-template-columns: 1fr; }
+  .reader-branch-list { justify-content: stretch; }
+  .reader-branch-list > * { flex: 1 1 auto; }
+  .item-head { flex-direction: column; }
+  .searchbar { flex-direction: column; align-items: stretch; }
+  .toolbar { gap: 7px; }
+  .segmented { max-width: 100%; overflow-x: auto; flex-wrap: nowrap; }
+  .segmented button { flex: 0 0 auto; }
+}
+
+@media (max-width: 520px) {
+  .lock-card { padding: 24px; border-radius: 26px; }
+  .app-mark { width: 52px; height: 52px; border-radius: 18px; }
+  .card { padding: 15px; border-radius: 20px; }
+  .grid { grid-template-columns: 1fr; }
+  .card.span-12, .card.span-8, .card.span-6, .card.span-4, .card.span-3 { grid-column: span 1; }
+  .view-head h2 { font-size: 28px; }
+  .stat { font-size: 34px; }
+  .reader { min-height: 68vh; padding: 20px; border-radius: 22px; }
+  .reader.vertical { max-height: 68vh; }
+  .editor-textarea { min-height: 52vh; }
+  .modal { width: min(100% - 16px, 660px); border-radius: 24px; }
+}
+
+
+/* ===== Reader horizontal layout fix 2026-07-03 =====
+   横読みでは本文エリアと移動ボタンを完全に別の行に分ける。
+   本文だけをスクロールさせ、ボタンが本文や下のカードに重ならないようにする。 */
+.main-app.reader-mode .reader-extra-panels {
+  display: none !important;
+}
+.reader-screen.mode-horizontal {
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto !important;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  overflow: hidden !important;
+}
+.reader-screen.mode-horizontal .reader-minimal-card {
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+.reader-screen.mode-horizontal .reader.horizontal {
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding-bottom: clamp(28px, 5vw, 56px) !important;
+  box-sizing: border-box !important;
+}
+.reader-screen.mode-horizontal .reader-end-nav {
+  display: none !important;
+}
+.reader-screen.mode-horizontal .reader-nav-card {
+  display: block !important;
+  position: relative !important;
+  z-index: 20 !important;
+  align-self: stretch !important;
+  width: 100% !important;
+  margin: 0 !important;
+  background: rgba(255,255,255,.96) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0,0,0,.08) !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,.10) !important;
+}
+.reader-screen.mode-horizontal .reader-nav-grid {
+  display: grid !important;
+  grid-template-columns: minmax(92px, auto) minmax(0, 1fr) minmax(120px, auto) !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+.reader-screen.mode-horizontal .reader-branch-list {
+  min-width: 0 !important;
+  overflow-x: auto !important;
+  flex-wrap: nowrap !important;
+  justify-content: flex-end !important;
+  -webkit-overflow-scrolling: touch;
+}
+.reader-screen.mode-horizontal .reader-branch-list button,
+.reader-screen.mode-horizontal .reader-nav-grid > div:first-child button {
+  white-space: nowrap !important;
+}
+@media (max-width: 520px) {
+  .reader-screen.mode-horizontal {
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto !important;
+    gap: 7px !important;
+    padding-bottom: calc(8px + var(--safe-bottom)) !important;
+  }
+  .reader-screen.mode-horizontal .reader-nav-card {
+    padding: 8px !important;
+    border-radius: 16px !important;
+  }
+  .reader-screen.mode-horizontal .reader-nav-grid {
+    grid-template-columns: auto minmax(0, 1fr) !important;
+  }
+  .reader-screen.mode-horizontal .reader-nav-center {
+    display: none !important;
+  }
+  .reader-screen.mode-horizontal .reader-branch-list {
+    justify-content: flex-end !important;
+  }
+}
+
+</style>
+</head>
+<body>
+  <div id="app" class="app-shell is-loading">
+    <section id="lockScreen" class="lock-screen" aria-live="polite">
+      <div class="lock-card">
+        <div class="app-mark">小</div>
+        <p class="eyebrow">PRIVATE NOVEL ARCHIVE</p>
+        <h1 id="lockTitle">小説保管庫</h1>
+        <p id="lockMessage" class="muted">パスコードを入力してください。</p>
+        <form id="lockForm" class="lock-form">
+          <input id="passcodeInput" type="password" inputmode="numeric" autocomplete="off" placeholder="パスコード" maxlength="12">
+          <input id="passcodeConfirmInput" class="hidden" type="password" inputmode="numeric" autocomplete="off" placeholder="もう一度入力" maxlength="12">
+          <button type="submit" class="primary wide">開く</button>
+        </form>
+        <button id="resetPasscodeButton" class="text-button danger hidden" type="button">初期化してパスコードを作り直す</button>
+        <p class="micro muted">このアプリは自分用の端末内保存アプリです。初回はパスコードを作成します。</p>
+      </div>
+    </section>
+
+    <main id="mainApp" class="main-app hidden">
+      <header class="topbar">
+        <button id="menuButton" class="icon-button menu-button" type="button" aria-label="メニュー">☰</button>
+        <div>
+          <p class="eyebrow">PRIVATE ARCHIVE</p>
+          <h1 id="pageTitle">ホーム</h1>
+        </div>
+        <button id="lockNowButton" class="ghost small" type="button">ロック</button>
+      </header>
+
+      <div class="layout">
+        <nav id="sideNav" class="side-nav">
+          <button data-view="home" class="nav-item active" type="button">ホーム</button>
+          <button data-view="reading" class="nav-item" type="button">読む</button>
+          <button data-view="series" class="nav-item" type="button">シリーズ</button>
+          <button data-view="ideas" class="nav-item" type="button">ネタ帳</button>
+          <button data-view="tags" class="nav-item" type="button">タグ</button>
+          <button data-view="search" class="nav-item" type="button">検索</button>
+          <button data-view="hidden" class="nav-item" type="button">非表示</button>
+          <button data-view="trash" class="nav-item" type="button">ゴミ箱</button>
+          <button data-view="backup" class="nav-item" type="button">バックアップ</button>
+          <button data-view="settings" class="nav-item" type="button">設定</button>
+        </nav>
+
+        <section id="content" class="content" tabindex="-1"></section>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="modal" class="modal">
+    <form method="dialog" class="modal-card">
+      <div class="modal-head">
+        <h2 id="modalTitle">確認</h2>
+        <button class="icon-button" value="cancel" aria-label="閉じる">×</button>
+      </div>
+      <div id="modalBody"></div>
+      <div id="modalActions" class="modal-actions"></div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script>
+(() => {
+  'use strict';
+
+  const DB_NAME = 'private_novel_archive_db';
+  const DB_VERSION = 1;
+  const STORE_NAME = 'kv';
+  const STATE_KEY = 'encrypted_state_v1';
+  const META_KEY = 'private_novel_archive_pass_meta_v1';
+  const VERIFIER_TEXT = 'private-novel-archive-verifier-v1';
+  const AUTO_SAVE_MS = 450;
+
+  // ===== クラウド同期設定 =====
+  // Firebase コンソールの「Config」に出る firebaseConfig を下に貼ってください。
+  // ここは Firebase と同じ名前の firebaseConfig でOKです。
+  // 空欄のままなら端末内保存だけで動きます。
+  const firebaseConfig = {
+    apiKey: '',
+    authDomain: '',
+    projectId: '',
+    storageBucket: '',
+    messagingSenderId: '',
+    appId: ''
+  };
+  const FIREBASE_CONFIG = firebaseConfig;
+
+  const CLOUD_DOC_ID = 'default';
+  const CLOUD_AUTOSYNC_MS = 5000;
+
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+  const nowISO = () => new Date().toISOString();
+  const todayKey = () => new Date().toISOString().slice(0, 10);
+  const uid = (prefix = 'id') => `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
+  const escapeHTML = (value = '') => String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+
+  let db = null;
+  let state = null;
+  let sessionKey = null;
+  let current = { view: 'home', seriesId: null, entryId: null, routeId: null, tab: 'stories' };
+  let autosaveTimer = null;
+  let toastTimer = null;
+  let cloudAutoTimer = null;
+  let firebaseApp = null;
+  let cloudAuth = null;
+  let cloudDb = null;
+  let cloudUser = null;
+  let cloudInitPromise = null;
+  let cloudBusy = false;
+  let cloudMessage = '';
+
+  const app = $('#app');
+  const lockScreen = $('#lockScreen');
+  const mainApp = $('#mainApp');
+  const content = $('#content');
+  const pageTitle = $('#pageTitle');
+  const modal = $('#modal');
+  const modalTitle = $('#modalTitle');
+  const modalBody = $('#modalBody');
+  const modalActions = $('#modalActions');
+  const toast = $('#toast');
+
+  const routeTypeLabels = {
+    main: '本編',
+    if: 'IF',
+    candidate: '採用候補',
+    rewrite: '書き直し版',
+    rejected: '没案'
+  };
+  const statusLabels = {
+    draft: '下書き',
+    writing: '執筆中',
+    complete: '完成',
+    hold: '保留',
+    rejected: '没'
+  };
+
+  function createInitialState() {
+    return {
+      appVersion: 1,
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+      settings: {
+        readerMode: 'horizontal',
+        readerFont: 'mincho',
+        readerTheme: 'light',
+        fontSize: 18,
+        lineHeight: 1.9,
+        contentWidth: 760,
+        lockOnHide: true,
+        cloudAutoSync: false
+      },
+      series: [],
+      ideas: [],
+      trash: [],
+      lastRead: null,
+      writingLog: {}
+    };
+  }
+
+  function localDBKey(key) {
+    return `${DB_NAME}_${STORE_NAME}_${key}`;
+  }
+
+  function openDB() {
+    if (!('indexedDB' in window)) return Promise.resolve({ localFallback: true });
+    return new Promise((resolve) => {
+      try {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = () => {
+          const database = request.result;
+          if (!database.objectStoreNames.contains(STORE_NAME)) database.createObjectStore(STORE_NAME);
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => resolve({ localFallback: true });
+        request.onblocked = () => resolve({ localFallback: true });
+      } catch (error) {
+        resolve({ localFallback: true });
+      }
+    });
+  }
+
+  function dbGet(key) {
+    if (db?.localFallback) {
+      return Promise.resolve(JSON.parse(localStorage.getItem(localDBKey(key)) || 'null'));
+    }
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.get(key);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  function dbSet(key, value) {
+    if (db?.localFallback) {
+      localStorage.setItem(localDBKey(key), JSON.stringify(value));
+      return Promise.resolve();
+    }
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.put(value, key);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  function dbDelete(key) {
+    if (db?.localFallback) {
+      localStorage.removeItem(localDBKey(key));
+      return Promise.resolve();
+    }
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.delete(key);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  function isFirebaseConfigured() {
+    return Boolean(FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.authDomain && FIREBASE_CONFIG.projectId && FIREBASE_CONFIG.appId);
+  }
+
+  function cloudStatusText() {
+    if (!isFirebaseConfigured()) return '未設定（Firebase設定を貼ると同期できます）';
+    if (!window.navigator.onLine) return 'オフライン';
+    if (!cloudAuth || !cloudDb) return '未接続';
+    if (!cloudUser) return '未ログイン';
+    return `ログイン中：${cloudUser.email || 'アカウント'}`;
+  }
+
+  function loadScript(src) {
+    if ($(`script[src="${src}"]`)) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = true;
+      script.onload = resolve;
+      script.onerror = () => reject(new Error('Firebaseライブラリを読み込めませんでした。ネット接続を確認してください。'));
+      document.head.appendChild(script);
+    });
+  }
+
+  async function ensureFirebase() {
+    if (!isFirebaseConfigured()) throw new Error('Firebase設定が未入力です。index.html内の firebaseConfig を確認してください。');
+    if (cloudInitPromise) return cloudInitPromise;
+    cloudInitPromise = (async () => {
+      if (!window.firebase?.apps) {
+        const version = '10.12.5';
+        await loadScript(`https://www.gstatic.com/firebasejs/${version}/firebase-app-compat.js`);
+        await loadScript(`https://www.gstatic.com/firebasejs/${version}/firebase-auth-compat.js`);
+        await loadScript(`https://www.gstatic.com/firebasejs/${version}/firebase-firestore-compat.js`);
+      }
+      if (!firebaseApp) {
+        firebaseApp = window.firebase.apps.length ? window.firebase.app() : window.firebase.initializeApp(FIREBASE_CONFIG);
+        cloudAuth = window.firebase.auth();
+        cloudDb = window.firebase.firestore();
+        try {
+          await cloudDb.enablePersistence({ synchronizeTabs: true });
+        } catch (error) {
+          console.warn('Firestore offline persistence was not enabled.', error);
+        }
+        cloudAuth.onAuthStateChanged((user) => {
+          cloudUser = user;
+          if (current.view === 'settings') renderSettings();
+        });
+      }
+      return { auth: cloudAuth, db: cloudDb };
+    })();
+    return cloudInitPromise;
+  }
+
+  async function getCurrentCloudUser() {
+    const { auth } = await ensureFirebase();
+    if (auth.currentUser) {
+      cloudUser = auth.currentUser;
+      return cloudUser;
+    }
+    throw new Error('クラウド同期にはログインが必要です。');
+  }
+
+  function cloudDocRef(uidValue) {
+    return cloudDb.collection('users').doc(uidValue).collection('archives').doc(CLOUD_DOC_ID);
+  }
+
+  async function getLocalEncryptedBundle() {
+    await saveEncryptedState(true, { skipCloud: true });
+    const meta = JSON.parse(localStorage.getItem(META_KEY) || 'null');
+    const encrypted = await dbGet(STATE_KEY);
+    if (!meta || !encrypted) throw new Error('端末内データが見つかりません。');
+    return { meta, encrypted, stateUpdatedAt: state?.updatedAt || nowISO(), appVersion: state?.appVersion || 1 };
+  }
+
+  function scheduleCloudUpload() {
+    if (!state?.settings?.cloudAutoSync || !cloudUser || cloudBusy || !isFirebaseConfigured()) return;
+    clearTimeout(cloudAutoTimer);
+    cloudAutoTimer = setTimeout(() => {
+      uploadCloudData({ silent: true }).catch((error) => {
+        console.warn(error);
+        cloudMessage = error.message || '自動同期に失敗しました。';
+      });
+    }, CLOUD_AUTOSYNC_MS);
+  }
+
+  async function cloudSignIn(email, password, create = false) {
+    const { auth } = await ensureFirebase();
+    if (!email || !password) throw new Error('メールアドレスとパスワードを入力してください。');
+    const result = create
+      ? await auth.createUserWithEmailAndPassword(email, password)
+      : await auth.signInWithEmailAndPassword(email, password);
+    cloudUser = result.user;
+    cloudMessage = create ? 'クラウドアカウントを作成しました。' : 'ログインしました。';
+    return cloudUser;
+  }
+
+  async function cloudSignOut() {
+    const { auth } = await ensureFirebase();
+    await auth.signOut();
+    cloudUser = null;
+    cloudMessage = 'ログアウトしました。';
+  }
+
+  async function uploadCloudData(options = {}) {
+    if (cloudBusy) return;
+    cloudBusy = true;
+    try {
+      const user = await getCurrentCloudUser();
+      const bundle = await getLocalEncryptedBundle();
+      await cloudDocRef(user.uid).set({
+        ...bundle,
+        cloudUpdatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      cloudMessage = 'クラウドへ保存しました。';
+      if (!options.silent) toastMessage(cloudMessage);
+    } finally {
+      cloudBusy = false;
+      if (current.view === 'settings') renderSettings();
+    }
+  }
+
+  async function fetchCloudBundle() {
+    const user = await getCurrentCloudUser();
+    const snap = await cloudDocRef(user.uid).get();
+    if (!snap.exists) throw new Error('クラウド側に保存データがありません。先にこの端末から保存してください。');
+    return snap.data();
+  }
+
+  async function decryptCloudBundle(bundle) {
+    const remoteMeta = bundle?.meta;
+    const encrypted = bundle?.encrypted;
+    if (!remoteMeta?.salt || !encrypted?.iv || !encrypted?.cipher) throw new Error('クラウドデータの形式が正しくありません。');
+    const localMeta = JSON.parse(localStorage.getItem(META_KEY) || 'null');
+    let key = sessionKey;
+    try {
+      if (!localMeta || localMeta.salt !== remoteMeta.salt) throw new Error('passcode-needed');
+      return { key, data: JSON.parse(await decryptText(key, encrypted)), meta: remoteMeta, encrypted };
+    } catch (error) {
+      const pass = window.prompt('クラウド保存時に使っていたアプリのパスコードを入力してください。');
+      if (!pass) throw new Error('クラウド復元をキャンセルしました。');
+      key = await deriveKey(pass, remoteMeta.salt);
+      return { key, data: JSON.parse(await decryptText(key, encrypted)), meta: remoteMeta, encrypted };
+    }
+  }
+
+  async function downloadCloudData() {
+    if (cloudBusy) return;
+    const ok = await confirmDialog('クラウドから取得しますか？', 'この端末内の現在の小説データを、クラウド側のデータで置き換えます。必要なら先にバックアップを作成してください。');
+    if (!ok) return;
+    cloudBusy = true;
+    try {
+      const bundle = await fetchCloudBundle();
+      const result = await decryptCloudBundle(bundle);
+      localStorage.setItem(META_KEY, JSON.stringify(result.meta));
+      sessionKey = result.key;
+      state = result.data;
+      await dbSet(STATE_KEY, result.encrypted);
+      cloudMessage = 'クラウドから取得しました。';
+      toastMessage(cloudMessage);
+      navigate('home');
+    } finally {
+      cloudBusy = false;
+      if (current.view === 'settings') renderSettings();
+    }
+  }
+
+  function bytesToB64(bytes) {
+    let binary = '';
+    const arr = new Uint8Array(bytes);
+    for (let i = 0; i < arr.length; i += 1) binary += String.fromCharCode(arr[i]);
+    return btoa(binary);
+  }
+
+  function b64ToBytes(b64) {
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+  }
+
+  async function deriveKey(passcode, saltB64) {
+    if (!crypto.subtle) throw new Error('このブラウザではロック機能を使えません。');
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(passcode), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: b64ToBytes(saltB64), iterations: 150000, hash: 'SHA-256' },
+      keyMaterial,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['encrypt', 'decrypt']
+    );
+  }
+
+  async function encryptText(key, text) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const data = new TextEncoder().encode(text);
+    const cipher = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, data);
+    return { iv: bytesToB64(iv), cipher: bytesToB64(cipher) };
+  }
+
+  async function decryptText(key, payload) {
+    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64ToBytes(payload.iv) }, key, b64ToBytes(payload.cipher));
+    return new TextDecoder().decode(plain);
+  }
+
+  async function saveEncryptedState(immediate = false, options = {}) {
+    if (!state || !sessionKey) return;
+    state.updatedAt = nowISO();
+    const work = async () => {
+      const encrypted = await encryptText(sessionKey, JSON.stringify(state));
+      await dbSet(STATE_KEY, encrypted);
+      if (!options.skipCloud) scheduleCloudUpload();
+    };
+    if (immediate) {
+      clearTimeout(autosaveTimer);
+      await work();
+      return;
+    }
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(() => work().catch(console.error), AUTO_SAVE_MS);
+  }
+
+  async function setupPasscode(passcode) {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const saltB64 = bytesToB64(salt);
+    const key = await deriveKey(passcode, saltB64);
+    const verifier = await encryptText(key, VERIFIER_TEXT);
+    localStorage.setItem(META_KEY, JSON.stringify({ salt: saltB64, verifier, createdAt: nowISO() }));
+    sessionKey = key;
+    state = createInitialState();
+    await saveEncryptedState(true);
+  }
+
+  async function unlock(passcode) {
+    const meta = JSON.parse(localStorage.getItem(META_KEY) || 'null');
+    if (!meta) throw new Error('パスコードが未設定です。');
+    const key = await deriveKey(passcode, meta.salt);
+    const verified = await decryptText(key, meta.verifier);
+    if (verified !== VERIFIER_TEXT) throw new Error('パスコードが違います。');
+    sessionKey = key;
+    const encrypted = await dbGet(STATE_KEY);
+    if (encrypted) {
+      state = JSON.parse(await decryptText(key, encrypted));
+    } else {
+      state = createInitialState();
+      await saveEncryptedState(true);
+    }
+  }
+
+  function hasPasscode() {
+    return Boolean(localStorage.getItem(META_KEY));
+  }
+
+  async function resetAllData() {
+    localStorage.removeItem(META_KEY);
+    await dbDelete(STATE_KEY);
+    state = null;
+    sessionKey = null;
+    showLockScreen();
+  }
+
+  function toastMessage(message) {
+    clearTimeout(toastTimer);
+    toast.textContent = message;
+    toast.classList.add('show');
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+  }
+
+  function parseTags(value = '') {
+    return Array.from(new Set(String(value)
+      .split(/[\s,、#]+/)
+      .map((tag) => tag.trim())
+      .filter(Boolean)));
+  }
+
+  function tagsToInput(tags = []) {
+    return tags.map((tag) => `#${tag}`).join(' ');
+  }
+
+  function renderTags(tags = [], soft = false) {
+    if (!tags.length) return '';
+    return `<div class="tag-row">${tags.map((tag) => `<span class="tag ${soft ? 'soft' : ''}">#${escapeHTML(tag)}</span>`).join('')}</div>`;
+  }
+
+  function charCountText(text = '') {
+    return String(text).replace(/\s/g, '').length;
+  }
+
+  function makePage(title = '1ページ', body = '', order = 0) {
+    return {
+      id: uid('page'),
+      title,
+      body,
+      order,
+      createdAt: nowISO(),
+      updatedAt: nowISO()
+    };
+  }
+
+  function normalizeRoutePages(route) {
+    if (!route) return [];
+    if (!Array.isArray(route.pages) || route.pages.length === 0) {
+      route.pages = [makePage('1ページ', route.body || '', 0)];
+    }
+    route.pages.forEach((page, index) => {
+      if (!page.id) page.id = uid('page');
+      if (!page.title) page.title = `${index + 1}ページ`;
+      if (typeof page.body !== 'string') page.body = '';
+      if (typeof page.order !== 'number') page.order = index;
+      if (!page.createdAt) page.createdAt = route.createdAt || nowISO();
+      if (!page.updatedAt) page.updatedAt = route.updatedAt || nowISO();
+    });
+    route.pages.sort((a, b) => (a.order || 0) - (b.order || 0) || compareDate(a.createdAt, b.createdAt));
+    route.pages.forEach((page, index) => (page.order = index));
+    route.body = route.pages.map((page) => page.body || '').join('\n\n');
+    return route.pages;
+  }
+
+  function routeBody(route) {
+    return normalizeRoutePages(route).map((page) => page.body || '').join('\n\n');
+  }
+
+  function routeChars(route) {
+    return charCountText(routeBody(route));
+  }
+
+  function cloneRoutePages(route) {
+    return normalizeRoutePages(route).map((page, index) => ({
+      ...page,
+      id: uid('page'),
+      order: index,
+      createdAt: nowISO(),
+      updatedAt: nowISO()
+    }));
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '-';
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return '-';
+    return date.toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function getSeries(seriesId) {
+    return state.series.find((item) => item.id === seriesId) || null;
+  }
+
+  function getEntry(seriesId, entryId) {
+    const series = getSeries(seriesId);
+    return series?.entries.find((item) => item.id === entryId) || null;
+  }
+
+  function getRoute(seriesId, entryId, routeId) {
+    const entry = getEntry(seriesId, entryId);
+    return entry?.routes.find((item) => item.id === routeId) || null;
+  }
+
+  function allEntries() {
+    const list = [];
+    state.series.forEach((series) => {
+      series.entries.forEach((entry) => {
+        entry.routes.forEach((route) => list.push({ series, entry, route }));
+      });
+    });
+    return list;
+  }
+
+  function getSeriesTags(series) {
+    const tags = new Set(series.tags || []);
+    series.entries.forEach((entry) => {
+      (entry.tags || []).forEach((tag) => tags.add(tag));
+      entry.routes.forEach((route) => (route.tags || []).forEach((tag) => tags.add(tag)));
+    });
+    return Array.from(tags);
+  }
+
+
+
+  const routeTypePriority = { main: 0, if: 1, candidate: 2, rewrite: 3, rejected: 4 };
+
+  function normalizeDigits(value = '') {
+    return String(value).replace(/[０-９]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
+  }
+
+  function routePriority(route) {
+    return routeTypePriority[route?.type] ?? 9;
+  }
+
+  function entryMainPriority(entry) {
+    return Math.min(...(entry?.routes || []).map(routePriority), 9);
+  }
+
+  function episodeKey(entry) {
+    const normalized = normalizeDigits(entry?.title || '')
+      .toLowerCase()
+      .replace(/\s+/g, '')
+      .replace(/[＿_\-―ー～〜:：/／|｜（）()\[\]【】「」『』]/g, '');
+    const numbered = normalized.match(/(?:第)?(\d+)(?:話|wa|episode|ep)/i);
+    if (numbered) return `${entry?.chapterId || ''}::episode-${Number(numbered[1])}`;
+    const stripped = normalized.replace(/本編|if|ｉｆ|ルート|別ルート|採用候補|書き直し版?|没案|下書き|完成/g, '');
+    return `${entry?.chapterId || ''}::${stripped || normalized || entry?.id}`;
+  }
+
+  function compareDate(a, b) {
+    return new Date(a || 0) - new Date(b || 0);
+  }
+
+  function compareEntries(a, b) {
+    const aKey = episodeKey(a);
+    const bKey = episodeKey(b);
+    if (aKey === bKey) {
+      return entryMainPriority(a) - entryMainPriority(b)
+        || (a.order || 0) - (b.order || 0)
+        || compareDate(a.createdAt, b.createdAt);
+    }
+    return (a.order || 0) - (b.order || 0) || compareDate(a.createdAt, b.createdAt);
+  }
+
+  function compareRoutes(a, b) {
+    return routePriority(a) - routePriority(b) || compareDate(a.createdAt, b.createdAt);
+  }
+
+  function orderedEntries(series) {
+    if (!series) return [];
+    const chapters = [{ id: '', order: -1 }, ...(series.chapters || []).slice().sort((a, b) => (a.order || 0) - (b.order || 0))];
+    const result = [];
+    chapters.forEach((chapter) => {
+      series.entries
+        .filter((entry) => (entry.chapterId || '') === chapter.id)
+        .slice()
+        .sort(compareEntries)
+        .forEach((entry) => result.push(entry));
+    });
+    series.entries
+      .filter((entry) => !result.some((item) => item.id === entry.id))
+      .slice()
+      .sort(compareEntries)
+      .forEach((entry) => result.push(entry));
+    return result;
+  }
+
+  function orderedEpisodeGroups(series) {
+    const groups = [];
+    orderedEntries(series).forEach((entry) => {
+      const key = episodeKey(entry);
+      let group = groups.find((item) => item.key === key);
+      if (!group) {
+        group = {
+          key,
+          title: entry.title,
+          chapterId: entry.chapterId || '',
+          order: entry.order || 0,
+          firstCreatedAt: entry.createdAt || '',
+          entries: [],
+          targets: []
+        };
+        groups.push(group);
+      }
+      group.entries.push(entry);
+      (entry.routes || []).forEach((route) => group.targets.push({ series, entry, route }));
+      const mainEntry = group.entries.find((item) => (item.routes || []).some((route) => route.type === 'main'));
+      if (mainEntry) group.title = mainEntry.title;
+    });
+    groups.forEach((group) => group.targets.sort((a, b) => compareRoutes(a.route, b.route) || compareDate(a.entry.createdAt, b.entry.createdAt)));
+    return groups;
+  }
+
+  function findEpisodeGroup(series, entry) {
+    return orderedEpisodeGroups(series).find((group) => group.entries.some((item) => item.id === entry?.id)) || null;
+  }
+
+  function primaryTargetOfGroup(group) {
+    return group?.targets?.find(({ route }) => route.type === 'main') || group?.targets?.[0] || null;
+  }
+
+  function mainRouteOf(entry) {
+    const routes = (entry?.routes || []).slice().sort(compareRoutes);
+    return routes.find((route) => route.type === 'main') || routes[0] || null;
+  }
+
+  function getFirstReadable(series) {
+    return primaryTargetOfGroup(orderedEpisodeGroups(series)[0]);
+  }
+
+  function getSeriesContinue(series) {
+    const routes = [];
+    orderedEpisodeGroups(series).forEach((group) => group.targets.forEach((target) => routes.push(target)));
+    const last = routes
+      .filter(({ route }) => route.read?.updatedAt)
+      .sort((a, b) => new Date(b.route.read.updatedAt) - new Date(a.route.read.updatedAt))[0];
+    if (last) return last;
+    return getFirstReadable(series);
+  }
+
+  function getPrevEntryTarget(series, entry) {
+    const groups = orderedEpisodeGroups(series);
+    const index = groups.findIndex((group) => group.entries.some((item) => item.id === entry?.id));
+    if (index <= 0) return null;
+    return primaryTargetOfGroup(groups[index - 1]);
+  }
+
+  function getNextEntryTargets(series, entry) {
+    const groups = orderedEpisodeGroups(series);
+    const index = groups.findIndex((group) => group.entries.some((item) => item.id === entry?.id));
+    if (index < 0 || index >= groups.length - 1) return [];
+    return groups[index + 1].targets.slice().sort((a, b) => compareRoutes(a.route, b.route));
+  }
+
+  function isStandaloneSeries(series) {
+    return (series?.kind || 'series') === 'single';
+  }
+
+
+  function makeSeries(title = '新規シリーズ') {
+    return {
+      id: uid('series'),
+      title,
+      description: '',
+      tags: [],
+      hidden: false,
+      favorite: false,
+      kind: 'series',
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+      notes: {
+        characters: '',
+        world: '',
+        timeline: '',
+        rules: '',
+        foreshadowing: '',
+        extra: ''
+      },
+      chapters: [],
+      entries: []
+    };
+  }
+
+  function makeChapter(title = '章A') {
+    return { id: uid('chapter'), title, order: 0, collapsed: false, createdAt: nowISO(), updatedAt: nowISO() };
+  }
+
+  function makeEntry(title = '第1話', chapterId = '') {
+    const route = makeRoute('本編', 'main', '');
+    const entry = {
+      id: uid('entry'),
+      title,
+      chapterId,
+      order: 0,
+      status: 'draft',
+      tags: [],
+      memo: '',
+      favorite: false,
+      readDone: false,
+      createdAt: nowISO(),
+      updatedAt: nowISO(),
+      routes: [route]
+    };
+    return entry;
+  }
+
+  function makeRoute(title = 'ルートA', type = 'if', body = '') {
+    return {
+      id: uid('route'),
+      title,
+      type,
+      status: type === 'main' ? 'writing' : 'draft',
+      tags: [],
+      memo: '',
+      body,
+      pages: [makePage('1ページ', body, 0)],
+      favorite: false,
+      read: { position: 0, pageIndex: 0, pagePosition: 0, completed: false, updatedAt: null },
+      bookmarks: [],
+      favoriteScenes: [],
+      createdAt: nowISO(),
+      updatedAt: nowISO()
+    };
+  }
+
+  function makeIdea(title = 'ネタA') {
+    return {
+      id: uid('idea'),
+      title,
+      body: '',
+      tags: [],
+      status: 'draft',
+      seriesId: '',
+      createdAt: nowISO(),
+      updatedAt: nowISO()
+    };
+  }
+
+  function touchSeries(series) {
+    series.updatedAt = nowISO();
+    state.updatedAt = nowISO();
+  }
+
+  function showLockScreen() {
+    mainApp.classList.add('hidden');
+    lockScreen.classList.remove('hidden');
+    app.classList.remove('is-loading');
+    const first = !hasPasscode();
+    $('#lockTitle').textContent = first ? 'パスコード作成' : '小説保管庫';
+    $('#lockMessage').textContent = first ? '初回起動です。自分だけのパスコードを作成してください。' : 'パスコードを入力してください。';
+    $('#passcodeInput').value = '';
+    $('#passcodeConfirmInput').value = '';
+    $('#passcodeConfirmInput').classList.toggle('hidden', !first);
+    $('#resetPasscodeButton').classList.toggle('hidden', first);
+    $('#passcodeInput').focus();
+  }
+
+  function showMainApp() {
+    lockScreen.classList.add('hidden');
+    mainApp.classList.remove('hidden');
+    app.classList.remove('is-loading');
+    navigate('home');
+  }
+
+  function setTitle(title) {
+    pageTitle.textContent = title;
+  }
+
+  function navigate(view, params = {}) {
+    const next = { ...current, view, ...params };
+    if (view !== 'reader' && view !== 'editor') {
+      delete next.pageIndex;
+    }
+    if (view !== 'reader') {
+      delete next.pendingReaderPosition;
+    }
+    if (view === 'reader' && !Object.prototype.hasOwnProperty.call(params, 'pageIndex')) {
+      const targetRoute = getRoute(next.seriesId, next.entryId, next.routeId);
+      next.pageIndex = targetRoute?.read?.pageIndex ?? 0;
+    }
+    if (view === 'editor' && !Object.prototype.hasOwnProperty.call(params, 'pageIndex')) {
+      next.pageIndex = 0;
+    }
+    current = next;
+    $$('.nav-item').forEach((button) => button.classList.toggle('active', button.dataset.view === view));
+    $('#sideNav').classList.remove('open');
+    render();
+    setTimeout(() => content.focus(), 0);
+  }
+
+  function render() {
+    if (!state) return;
+    const view = current.view;
+    mainApp.classList.toggle('reader-mode', view === 'reader');
+    if (view === 'home') return renderHome();
+    if (view === 'reading') return renderReadingShelf();
+    if (view === 'series') return renderSeriesList(false);
+    if (view === 'hidden') return renderSeriesList(true);
+    if (view === 'seriesDetail') return renderSeriesDetail(current.seriesId, current.tab || 'stories');
+    if (view === 'editor') return renderEditor(current.seriesId, current.entryId, current.routeId);
+    if (view === 'reader') return renderReader(current.seriesId, current.entryId, current.routeId);
+    if (view === 'ideas') return renderIdeas();
+    if (view === 'tags') return renderTagView();
+    if (view === 'search') return renderSearch();
+    if (view === 'trash') return renderTrash();
+    if (view === 'backup') return renderBackup();
+    if (view === 'settings') return renderSettings();
+    renderHome();
+  }
+
+
+  function renderReadingShelf() {
+    setTitle('読む');
+    const list = state.series
+      .filter((series) => !series.hidden && series.entries.length)
+      .sort((a, b) => Number(Boolean(b.favorite)) - Number(Boolean(a.favorite)) || new Date(b.updatedAt) - new Date(a.updatedAt));
+    content.innerHTML = `
+      <div class="view-head">
+        <div>
+          <h2>読む</h2>
+          <p class="muted">シリーズものはシリーズタイトル、単発ものは単発タイトルで一覧表示します。</p>
+        </div>
+        <div class="actions">
+          <button class="primary" data-action="new-series">作品を追加</button>
+        </div>
+      </div>
+      ${list.length ? `<div class="shelf-grid">${list.map(renderReadingShelfCard).join('')}</div>` : '<div class="empty">まだ読める作品がありません。シリーズから話を追加してください。</div>'}
+    `;
+    content.onclick = (event) => {
+      const target = event.target.closest('button');
+      if (!target) return;
+      if (target.dataset.action === 'new-series') return openSeriesModal();
+      const series = getSeries(target.dataset.series);
+      if (!series) return;
+      if (target.dataset.action === 'open-series') return navigate('seriesDetail', { seriesId: series.id, tab: 'stories' });
+      if (target.dataset.action === 'read-first') {
+        const first = getFirstReadable(series);
+        if (!first) return toastMessage('読む話がありません。');
+        first.route.read.position = 0;
+        first.route.read.updatedAt = nowISO();
+        first.route.read.pageIndex = 0;
+        first.route.read.pagePosition = 0;
+        state.lastRead = { seriesId: first.series.id, entryId: first.entry.id, routeId: first.route.id, pageIndex: 0, at: nowISO() };
+        saveEncryptedState(true);
+        return navigate('reader', { seriesId: first.series.id, entryId: first.entry.id, routeId: first.route.id, pageIndex: 0 });
+      }
+      if (target.dataset.action === 'read-continue') {
+        const next = getSeriesContinue(series);
+        if (!next) return toastMessage('読む話がありません。');
+        return navigate('reader', { seriesId: next.series.id, entryId: next.entry.id, routeId: next.route.id, pageIndex: next.route.read?.pageIndex || 0 });
+      }
+    };
+  }
+
+  function renderReadingShelfCard(series) {
+    const standalone = isStandaloneSeries(series);
+    const entries = orderedEntries(series);
+    const first = getFirstReadable(series);
+    const cont = getSeriesContinue(series);
+    const routeCount = entries.reduce((sum, entry) => sum + (entry.routes?.length || 0), 0);
+    const chars = entries.reduce((sum, entry) => sum + (entry.routes || []).reduce((s, route) => s + routeChars(route), 0), 0);
+    const tags = getSeriesTags(series).slice(0, 8);
+    const title = standalone && first ? first.entry.title : series.title;
+    const subtitle = standalone ? '単発' : `${entries.length}話 / ${routeCount}ルート`;
+    const desc = standalone ? (first ? routeBody(first.route) : series.description || first?.entry?.memo || '').slice(0, 120) : (series.description || '');
+    return `
+      <article class="shelf-card">
+        <div>
+          <p class="shelf-kicker">${standalone ? 'SINGLE' : 'SERIES'}</p>
+          <h3 class="shelf-title">${series.favorite ? '★ ' : ''}${escapeHTML(title)}</h3>
+          <div class="shelf-meta"><span>${subtitle}</span><span>${chars.toLocaleString()}字</span><span>更新 ${formatDate(series.updatedAt)}</span></div>
+          ${desc ? `<p class="shelf-desc">${escapeHTML(desc)}</p>` : ''}
+          ${renderTags(tags, true)}
+        </div>
+        <div class="shelf-actions ${standalone ? 'single' : ''}">
+          <button class="primary small" data-action="read-first" data-series="${series.id}">${standalone ? '読む' : '一話から読む'}</button>
+          ${!standalone ? `<button class="ghost small" data-action="read-continue" data-series="${series.id}">続きから読む</button>` : ''}
+          ${standalone ? `<button class="ghost small" data-action="read-continue" data-series="${series.id}">続きから読む</button>` : ''}
+          <button class="secondary small" data-action="open-series" data-series="${series.id}">詳細</button>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderHome() {
+    setTitle('ホーム');
+    const visibleSeries = state.series.filter((item) => !item.hidden);
+    const entries = allEntries().filter(({ series }) => !series.hidden);
+    const totalChars = entries.reduce((sum, item) => sum + routeChars(item.route), 0);
+    const today = todayKey();
+    const todayChars = entries
+      .filter(({ route }) => (route.updatedAt || '').slice(0, 10) === today)
+      .reduce((sum, item) => sum + routeChars(item.route), 0);
+    const recentEdited = entries
+      .slice()
+      .sort((a, b) => new Date(b.route.updatedAt) - new Date(a.route.updatedAt))
+      .slice(0, 5);
+    const recentRead = entries
+      .filter(({ route }) => route.read?.updatedAt)
+      .sort((a, b) => new Date(b.route.read.updatedAt) - new Date(a.route.read.updatedAt))
+      .slice(0, 5);
+    const lastRead = state.lastRead ? getRoute(state.lastRead.seriesId, state.lastRead.entryId, state.lastRead.routeId) : null;
+    const tagCounts = collectTags().slice(0, 12);
+
+    content.innerHTML = `
+      <div class="view-head">
+        <div>
+          <h2>ホーム</h2>
+          <p class="muted">自分専用の小説保管庫です。</p>
+        </div>
+        <div class="actions">
+          <button class="primary" data-action="new-series">シリーズ作成</button>
+          <button class="ghost" data-action="new-idea">ネタ追加</button>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="card span-3"><h3>シリーズ</h3><p class="stat">${visibleSeries.length}</p><p class="muted micro">非表示を除く</p></div>
+        <div class="card span-3"><h3>話数</h3><p class="stat">${new Set(entries.map((x) => x.entry.id)).size}</p><p class="muted micro">全シリーズ合計</p></div>
+        <div class="card span-3"><h3>ルート</h3><p class="stat">${entries.length}</p><p class="muted micro">本編・IFなど</p></div>
+        <div class="card span-3"><h3>総文字数</h3><p class="stat">${totalChars.toLocaleString()}</p><p class="muted micro">空白除外</p></div>
+        <div class="card span-6">
+          <h3>続きから読む</h3>
+          ${lastRead ? renderMiniRoute(state.lastRead.seriesId, state.lastRead.entryId, state.lastRead.routeId, true) : '<div class="empty">まだ読書履歴がありません。</div>'}
+        </div>
+        <div class="card span-6">
+          <h3>今日編集した本文量</h3>
+          <p class="stat">${todayChars.toLocaleString()}</p>
+          <p class="muted micro">今日更新したルートの本文文字数合計です。</p>
+        </div>
+        <div class="card span-6">
+          <h3>最近編集したもの</h3>
+          <div class="list">${recentEdited.length ? recentEdited.map(({ series, entry, route }) => renderMiniRoute(series.id, entry.id, route.id)).join('') : '<div class="empty">まだありません。</div>'}</div>
+        </div>
+        <div class="card span-6">
+          <h3>最近読んだもの</h3>
+          <div class="list">${recentRead.length ? recentRead.map(({ series, entry, route }) => renderMiniRoute(series.id, entry.id, route.id, true)).join('') : '<div class="empty">まだありません。</div>'}</div>
+        </div>
+        <div class="card span-12">
+          <div class="item-head"><h3>よく使うタグ</h3><button class="ghost small" data-view-target="tags">タグ一覧</button></div>
+          ${tagCounts.length ? `<div class="tag-row">${tagCounts.map((item) => `<button class="tag" data-action="open-tag" data-tag="${escapeHTML(item.tag)}">#${escapeHTML(item.tag)} <span>${item.total}</span></button>`).join('')}</div>` : '<div class="empty">タグはまだありません。</div>'}
+        </div>
+      </div>
+    `;
+    bindHomeActions();
+  }
+
+  function renderMiniRoute(seriesId, entryId, routeId, isRead = false) {
+    const series = getSeries(seriesId);
+    const entry = getEntry(seriesId, entryId);
+    const route = getRoute(seriesId, entryId, routeId);
+    if (!series || !entry || !route) return '';
+    return `
+      <div class="item">
+        <div class="item-head">
+          <div>
+            <p class="item-title">${escapeHTML(entry.title)} / ${escapeHTML(route.title)}</p>
+            <p class="item-sub">${escapeHTML(series.title)} ・ ${routeTypeLabels[route.type] || route.type} ・ ${isRead ? `読書 ${Math.round((route.read?.position || 0) * 100)}%` : `更新 ${formatDate(route.updatedAt)}`}</p>
+          </div>
+          <div class="actions">
+            <button class="ghost small" data-action="read-route" data-series="${seriesId}" data-entry="${entryId}" data-route="${routeId}">読む</button>
+            <button class="secondary small" data-action="edit-route" data-series="${seriesId}" data-entry="${entryId}" data-route="${routeId}">編集</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function bindHomeActions() {
+    content.onclick = async (event) => {
+      const target = event.target.closest('[data-action]');
+      if (!target || !content.contains(target)) return;
+      const action = target.dataset.action;
+      if (action === 'new-series') return openSeriesModal();
+      if (action === 'new-idea') return openIdeaModal();
+      if (action === 'read-route') return navigate('reader', { seriesId: target.dataset.series, entryId: target.dataset.entry, routeId: target.dataset.route });
+      if (action === 'edit-route') return navigate('editor', { seriesId: target.dataset.series, entryId: target.dataset.entry, routeId: target.dataset.route });
+      if (action === 'open-tag') return navigate('tags', { tag: target.dataset.tag });
+      if (target.dataset.viewTarget) return navigate(target.dataset.viewTarget);
+    };
+  }
+
+  function renderSeriesList(hiddenOnly = false) {
+    setTitle(hiddenOnly ? '非表示' : 'シリーズ');
+    const list = state.series.filter((series) => hiddenOnly ? series.hidden : !series.hidden);
+    const wordQuery = current.seriesWordQuery || '';
+    const wordResults = wordQuery ? searchBodyInSeries(wordQuery, hiddenOnly) : [];
+    content.innerHTML = `
+      <div class="view-head">
+        <div>
+          <h2>${hiddenOnly ? '非表示シリーズ' : 'シリーズ一覧'}</h2>
+          <p class="muted">シリーズ・章・話・ルートを管理します。本文検索では、セリフや単語から該当する話を探せます。</p>
+        </div>
+        <div class="actions">
+          <button class="primary" data-action="new-series">シリーズ作成</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>本文の単語検索</h3>
+        <p class="muted micro">本文に含まれる言葉で検索します。タグ検索とは別で、見たいセリフや単語から探せます。</p>
+        <div class="searchbar" style="margin-top:10px">
+          <input id="seriesWordSearchInput" value="${escapeHTML(wordQuery)}" placeholder="例：待って">
+          <button class="primary" data-action="series-word-search">検索</button>
+          ${wordQuery ? '<button class="ghost" data-action="series-word-clear">クリア</button>' : ''}
+        </div>
+        ${wordQuery ? `
+          <div class="search-result-head">
+            <strong>「${escapeHTML(wordQuery)}」の検索結果：${wordResults.length}件</strong>
+          </div>
+          ${wordResults.length ? `<div class="list">${wordResults.map((item) => renderBodySearchResult(item, wordQuery)).join('')}</div>` : '<div class="empty">本文内には見つかりませんでした。</div>'}
+        ` : ''}
+      </div>
+      <div style="height:14px"></div>
+      ${list.length ? `<div class="list">${list.map(renderSeriesCard).join('')}</div>` : '<div class="empty">まだありません。</div>'}
+    `;
+    $('#seriesWordSearchInput', content)?.focus();
+    content.onclick = async (event) => {
+      const target = event.target.closest('button');
+      if (!target) return;
+      const id = target.dataset.series;
+      const series = getSeries(id);
+      if (target.dataset.action === 'series-word-search') return navigate(hiddenOnly ? 'hidden' : 'series', { seriesWordQuery: $('#seriesWordSearchInput', content).value.trim() });
+      if (target.dataset.action === 'series-word-clear') return navigate(hiddenOnly ? 'hidden' : 'series', { seriesWordQuery: '' });
+      if (target.dataset.action === 'read-route') return navigate('reader', { seriesId: target.dataset.series, entryId: target.dataset.entry, routeId: target.dataset.route });
+      if (target.dataset.action === 'new-series') return openSeriesModal();
+      if (!series) return;
+      if (target.dataset.action === 'open-series') return navigate('seriesDetail', { seriesId: id, tab: 'stories' });
+      if (target.dataset.action === 'edit-series') return openSeriesModal(series);
+      if (target.dataset.action === 'toggle-hidden') {
+        series.hidden = !series.hidden;
+        touchSeries(series);
+        await saveEncryptedState(true);
+        toastMessage(series.hidden ? '非表示にしました。' : '表示に戻しました。');
+        render();
+      }
+      if (target.dataset.action === 'delete-series') return confirmDeleteSeries(series);
+      if (target.dataset.action === 'favorite-series') {
+        series.favorite = !series.favorite;
+        touchSeries(series);
+        await saveEncryptedState(true);
+        render();
+      }
+    };
+    content.onkeydown = (event) => {
+      if (event.key === 'Enter' && event.target.id === 'seriesWordSearchInput') {
+        navigate(hiddenOnly ? 'hidden' : 'series', { seriesWordQuery: event.target.value.trim() });
+      }
+    };
+  }
+
+  function searchBodyInSeries(query, hiddenOnly = false) {
+    const q = String(query || '').trim().toLowerCase();
+    if (!q) return [];
+    const results = [];
+    state.series
+      .filter((series) => hiddenOnly ? series.hidden : !series.hidden)
+      .forEach((series) => {
+        orderedEntries(series).forEach((entry) => {
+          (entry.routes || []).slice().sort(compareRoutes).forEach((route) => {
+            const body = String(routeBody(route) || '');
+            if (body.toLowerCase().includes(q)) results.push({ series, entry, route });
+          });
+        });
+      });
+    return results.slice(0, 200);
+  }
+
+  function excerptWithHighlight(text, query) {
+    const source = String(text || '');
+    const q = String(query || '').trim();
+    if (!q) return escapeHTML(source.slice(0, 140));
+    const lower = source.toLowerCase();
+    const index = lower.indexOf(q.toLowerCase());
+    if (index < 0) return escapeHTML(source.slice(0, 160));
+    const start = Math.max(0, index - 52);
+    const end = Math.min(source.length, index + q.length + 80);
+    const before = source.slice(start, index);
+    const match = source.slice(index, index + q.length);
+    const after = source.slice(index + q.length, end);
+    return `${start > 0 ? '…' : ''}${escapeHTML(before)}<mark>${escapeHTML(match)}</mark>${escapeHTML(after)}${end < source.length ? '…' : ''}`;
+  }
+
+  function renderBodySearchResult({ series, entry, route }, query) {
+    return `
+      <div class="item">
+        <div class="item-head">
+          <div>
+            <p class="item-title">${escapeHTML(entry.title)} / ${escapeHTML(route.title)}</p>
+            <p class="item-sub">${escapeHTML(series.title)} ・ ${routeTypeLabels[route.type] || route.type} ・ ${routeChars(route).toLocaleString()}字</p>
+          </div>
+          <div class="actions">
+            <button class="primary small" data-action="read-route" data-series="${series.id}" data-entry="${entry.id}" data-route="${route.id}">読む</button>
+            <button class="ghost small" data-action="open-series" data-series="${series.id}">詳細</button>
+          </div>
+        </div>
+        <p class="search-excerpt">${excerptWithHighlight(routeBody(route), query)}</p>
+      </div>
+    `;
+  }
+
+  function renderSeriesCard(series) {
+    const episodeGroups = orderedEpisodeGroups(series);
+    const routeCount = episodeGroups.reduce((sum, group) => sum + group.targets.length, 0);
+    const chars = episodeGroups.reduce((sum, group) => sum + group.targets.reduce((s, target) => s + routeChars(target.route), 0), 0);
+    const tags = getSeriesTags(series).slice(0, 12);
+    return `
+      <div class="item">
+        <div class="item-head">
+          <div>
+            <p class="item-title">${series.favorite ? '★ ' : ''}${escapeHTML(series.title)}</p>
+            <p class="item-sub">${isStandaloneSeries(series) ? '単発' : 'シリーズ'} ・ ${episodeGroups.length}話 / ${routeCount}ルート / ${chars.toLocaleString()}字 ・ 更新 ${formatDate(series.updatedAt)}</p>
+          </div>
+          <div class="actions">
+            <button class="primary small" data-action="open-series" data-series="${series.id}">開く</button>
+            <button class="secondary small" data-action="edit-series" data-series="${series.id}">編集</button>
+            <button class="ghost small" data-action="favorite-series" data-series="${series.id}">${series.favorite ? '★解除' : '★'}</button>
+          </div>
+        </div>
+        ${series.description ? `<p class="item-body">${escapeHTML(series.description)}</p>` : ''}
+        ${renderTags(tags, true)}
+        <div class="toolbar">
+          <button class="ghost small" data-action="toggle-hidden" data-series="${series.id}">${series.hidden ? '表示に戻す' : '非表示'}</button>
+          <button class="danger-button small" data-action="delete-series" data-series="${series.id}">ゴミ箱へ</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderSeriesDetail(seriesId, tab = 'stories') {
+    const series = getSeries(seriesId);
+    if (!series) return navigate('series');
+    setTitle(series.title);
+    const tabs = [
+      ['stories', '話一覧'],
+      ['notes', '設定メモ'],
+      ['tags', 'タグ'],
+      ['stats', '集計']
+    ];
+    content.innerHTML = `
+      <div class="view-head">
+        <div>
+          <button class="text-button" data-action="back-series">← シリーズ一覧へ</button>
+          <h2>${escapeHTML(series.title)}</h2>
+          <p class="muted">${series.entries.length}話 ・ ${series.chapters.length}章</p>
+        </div>
+        <div class="actions">
+          <button class="primary" data-action="new-entry">話を追加</button>
+          <button class="ghost" data-action="new-chapter">章を追加</button>
+        </div>
+      </div>
+      <div class="tabs">${tabs.map(([key, label]) => `<button class="tab ${tab === key ? 'active' : ''}" data-tab="${key}">${label}</button>`).join('')}</div>
+      <div id="seriesTabBody"></div>
+    `;
+    const body = $('#seriesTabBody', content);
+    if (tab === 'stories') body.innerHTML = renderSeriesStories(series);
+    if (tab === 'notes') body.innerHTML = renderSeriesNotes(series);
+    if (tab === 'tags') body.innerHTML = renderSeriesTagsEditor(series);
+    if (tab === 'stats') body.innerHTML = renderSeriesStats(series);
+    bindSeriesDetail(series);
+  }
+
+  function renderSeriesStories(series) {
+    const chapters = [{ id: '', title: '章なし' }, ...series.chapters.sort((a, b) => a.order - b.order)];
+    return chapters.map((chapter) => {
+      const entries = series.entries
+        .filter((entry) => (entry.chapterId || '') === chapter.id)
+        .sort(compareEntries);
+      return `
+        <div class="card span-12" style="margin-bottom:14px">
+          <div class="item-head">
+            <h3>${escapeHTML(chapter.title)}</h3>
+            ${chapter.id ? `<div class="actions"><button class="secondary small" data-action="edit-chapter" data-chapter="${chapter.id}">章名編集</button><button class="danger-button small" data-action="delete-chapter" data-chapter="${chapter.id}">削除</button></div>` : ''}
+          </div>
+          ${entries.length ? `<div class="list">${entries.map((entry, index) => renderEntryCard(series, entry, index)).join('')}</div>` : '<div class="empty">この章にはまだ話がありません。</div>'}
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderEntryCard(series, entry, index) {
+    const mainRoute = entry.routes.find((route) => route.type === 'main') || entry.routes[0];
+    const chars = entry.routes.reduce((sum, route) => sum + routeChars(route), 0);
+    return `
+      <div class="item">
+        <div class="item-head">
+          <div>
+            <p class="item-title">${entry.favorite ? '★ ' : ''}${escapeHTML(entry.title)}</p>
+            <p class="item-sub">${statusLabels[entry.status] || entry.status} ・ ${entry.routes.length}ルート ・ ${chars.toLocaleString()}字 ・ 更新 ${formatDate(entry.updatedAt)}</p>
+          </div>
+          <div class="actions">
+            ${mainRoute ? `<button class="primary small" data-action="read-route" data-entry="${entry.id}" data-route="${mainRoute.id}">読む</button>` : ''}
+            ${mainRoute ? `<button class="secondary small" data-action="edit-route" data-entry="${entry.id}" data-route="${mainRoute.id}">編集</button>` : ''}
+          </div>
+        </div>
+        ${entry.memo ? `<p class="item-body">${escapeHTML(entry.memo)}</p>` : ''}
+        ${renderTags(entry.tags, true)}
+        <div class="toolbar">
+          ${entry.routes.map((route) => `<button class="route-pill ${route.type === 'main' ? 'active' : ''}" data-action="edit-route" data-entry="${entry.id}" data-route="${route.id}"><span class="badge ${route.type === 'main' ? '' : 'light'}">${routeTypeLabels[route.type] || route.type}</span> ${escapeHTML(route.title)} <span class="muted micro">${routeChars(route).toLocaleString()}字</span></button>`).join('')}
+        </div>
+        <div class="toolbar">
+          <button class="ghost small" data-action="new-route" data-entry="${entry.id}">IF/別ルート追加</button>
+          <button class="secondary small" data-action="edit-entry" data-entry="${entry.id}">話情報</button>
+          <button class="secondary small" data-action="duplicate-entry" data-entry="${entry.id}">複製</button>
+          <button class="ghost small" data-action="favorite-entry" data-entry="${entry.id}">${entry.favorite ? '★解除' : '★'}</button>
+          <button class="danger-button small" data-action="delete-entry" data-entry="${entry.id}">ゴミ箱へ</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderSeriesNotes(series) {
+    const n = series.notes;
+    return `
+      <div class="card">
+        <div class="form-grid">
+          <label class="full">シリーズ説明<textarea data-field="description">${escapeHTML(series.description || '')}</textarea></label>
+          <label class="full">キャラ設定メモ<textarea data-note="characters">${escapeHTML(n.characters || '')}</textarea></label>
+          <label class="full">世界線設定メモ<textarea data-note="world">${escapeHTML(n.world || '')}</textarea></label>
+          <label class="full">時系列メモ<textarea data-note="timeline">${escapeHTML(n.timeline || '')}</textarea></label>
+          <label class="full">表現ルール・NGメモ<textarea data-note="rules">${escapeHTML(n.rules || '')}</textarea></label>
+          <label class="full">伏線・回収メモ<textarea data-note="foreshadowing">${escapeHTML(n.foreshadowing || '')}</textarea></label>
+          <label class="full">その他メモ<textarea data-note="extra">${escapeHTML(n.extra || '')}</textarea></label>
+        </div>
+        <p class="muted micro">入力すると自動保存されます。</p>
+      </div>
+    `;
+  }
+
+  function renderSeriesTagsEditor(series) {
+    const all = getSeriesTags(series);
+    return `
+      <div class="card">
+        <div class="form-grid">
+          <label class="full">シリーズタグ
+            <input data-field="tags" value="${escapeHTML(tagsToInput(series.tags || []))}" placeholder="#タグA #タグB">
+            <span class="help">実際のタグ名は自分で入力してください。</span>
+          </label>
+        </div>
+        <h3 style="margin-top:16px">このシリーズ内で使われているタグ</h3>
+        ${all.length ? `<div class="tag-row">${all.map((tag) => `<button class="tag" data-action="open-tag" data-tag="${escapeHTML(tag)}">#${escapeHTML(tag)}</button>`).join('')}</div>` : '<div class="empty">まだタグがありません。</div>'}
+      </div>
+    `;
+  }
+
+  function renderSeriesStats(series) {
+    const routes = [];
+    series.entries.forEach((entry) => entry.routes.forEach((route) => routes.push({ entry, route })));
+    const chars = routes.reduce((sum, { route }) => sum + routeChars(route), 0);
+    const byType = Object.keys(routeTypeLabels).map((type) => [type, routes.filter(({ route }) => route.type === type).length]);
+    return `
+      <div class="grid">
+        <div class="card span-3"><h3>話数</h3><p class="stat">${series.entries.length}</p></div>
+        <div class="card span-3"><h3>ルート</h3><p class="stat">${routes.length}</p></div>
+        <div class="card span-3"><h3>文字数</h3><p class="stat">${chars.toLocaleString()}</p></div>
+        <div class="card span-3"><h3>タグ数</h3><p class="stat">${getSeriesTags(series).length}</p></div>
+        <div class="card span-12"><h3>ルート種別</h3><div class="tag-row">${byType.map(([type, count]) => `<span class="tag soft">${routeTypeLabels[type]}：${count}</span>`).join('')}</div></div>
+      </div>
+    `;
+  }
+
+  function bindSeriesDetail(series) {
+    content.onclick = async (event) => {
+      const target = event.target.closest('button');
+      if (!target) return;
+      if (target.dataset.tab) return navigate('seriesDetail', { seriesId: series.id, tab: target.dataset.tab });
+      const action = target.dataset.action;
+      if (action === 'back-series') return navigate('series');
+      if (action === 'new-entry') return openEntryModal(series);
+      if (action === 'new-chapter') return openChapterModal(series);
+      if (action === 'edit-chapter') return openChapterModal(series, series.chapters.find((c) => c.id === target.dataset.chapter));
+      if (action === 'delete-chapter') return deleteChapter(series, target.dataset.chapter);
+      if (action === 'read-route') return navigate('reader', { seriesId: series.id, entryId: target.dataset.entry, routeId: target.dataset.route });
+      if (action === 'edit-route') return navigate('editor', { seriesId: series.id, entryId: target.dataset.entry, routeId: target.dataset.route });
+      if (action === 'new-route') return openRouteModal(series, series.entries.find((e) => e.id === target.dataset.entry));
+      if (action === 'edit-entry') return openEntryModal(series, series.entries.find((e) => e.id === target.dataset.entry));
+      if (action === 'duplicate-entry') return duplicateEntry(series, target.dataset.entry);
+      if (action === 'favorite-entry') return toggleFavoriteEntry(series, target.dataset.entry);
+      if (action === 'delete-entry') return confirmDeleteEntry(series, target.dataset.entry);
+      if (action === 'open-tag') return navigate('tags', { tag: target.dataset.tag });
+    };
+    content.oninput = (event) => {
+      const target = event.target;
+      if (target.matches('[data-note]')) {
+        series.notes[target.dataset.note] = target.value;
+        touchSeries(series);
+        saveEncryptedState();
+      }
+      if (target.matches('[data-field="description"]')) {
+        series.description = target.value;
+        touchSeries(series);
+        saveEncryptedState();
+      }
+      if (target.matches('[data-field="tags"]')) {
+        series.tags = parseTags(target.value);
+        touchSeries(series);
+        saveEncryptedState();
+      }
+    };
+  }
+
+  function renderEditor(seriesId, entryId, routeId) {
+    const series = getSeries(seriesId);
+    const entry = getEntry(seriesId, entryId);
+    const route = getRoute(seriesId, entryId, routeId);
+    if (!series || !entry || !route) return navigate('series');
+    setTitle('編集');
+    const pages = normalizeRoutePages(route);
+    const pageIndex = Math.min(Math.max(Number(current.pageIndex || 0), 0), pages.length - 1);
+    const page = pages[pageIndex];
+    const chapterOptions = ['<option value="">章なし</option>', ...series.chapters.map((chapter) => `<option value="${chapter.id}" ${entry.chapterId === chapter.id ? 'selected' : ''}>${escapeHTML(chapter.title)}</option>`)].join('');
+    content.innerHTML = `
+      <div class="view-head">
+        <div>
+          <button class="text-button" data-action="back-detail">← ${escapeHTML(series.title)}へ</button>
+          <h2>${escapeHTML(entry.title)}</h2>
+          <p class="muted">${escapeHTML(route.title)} ・ 全${pages.length}ページ ・ ${routeChars(route).toLocaleString()}字</p>
+        </div>
+        <div class="actions">
+          <button class="primary" data-action="read-current">読む</button>
+          <button class="ghost" data-action="save-now">保存</button>
+        </div>
+      </div>
+      <div class="editor-layout">
+        <aside class="card">
+          <h3>ルート</h3>
+          <div class="route-list">${entry.routes.map((r) => `<button class="route-pill ${r.id === route.id ? 'active' : ''}" data-action="switch-route" data-route="${r.id}"><span class="badge ${r.type === 'main' ? '' : 'light'}">${routeTypeLabels[r.type] || r.type}</span><br>${escapeHTML(r.title)}<br><span class="muted micro">${routeChars(r).toLocaleString()}字</span></button>`).join('')}</div>
+          <div class="toolbar"><button class="ghost small" data-action="new-route">IF/別ルート追加</button><button class="secondary small" data-action="copy-route">このルートを複製</button></div>
+          <hr>
+          <h3>ページ</h3>
+          <div class="page-list">${pages.map((p, index) => `<div class="page-row ${index === pageIndex ? 'active' : ''}" data-action="switch-page" data-page="${index}" role="button" tabindex="0" aria-label="${index + 1}ページ目を編集"><div><span class="badge light">${index + 1}/${pages.length}</span><div class="page-row-title">${escapeHTML(p.title || `${index + 1}ページ`)}</div><div class="page-row-meta">${charCountText(p.body).toLocaleString()}字 ・ タップで編集</div></div><div class="page-row-actions"><button class="secondary small" data-action="move-page-up" data-page="${index}" ${index <= 0 ? 'disabled' : ''}>↑</button><button class="secondary small" data-action="move-page-down" data-page="${index}" ${index >= pages.length - 1 ? 'disabled' : ''}>↓</button></div></div>`).join('')}</div>
+          <div class="toolbar">
+            <button class="ghost small" data-action="add-page">ページ追加</button>
+            <button class="danger-button small" data-action="delete-page" ${pages.length <= 1 ? 'disabled' : ''}>表示中ページを削除</button>
+          </div>
+          <hr>
+          <label>話タイトル<input data-entry-field="title" value="${escapeHTML(entry.title)}"></label>
+          <label>章<select data-entry-field="chapterId">${chapterOptions}</select></label>
+          <label>話ステータス<select data-entry-field="status">${renderOptions(statusLabels, entry.status)}</select></label>
+          <label>話タグ<input data-entry-field="tags" value="${escapeHTML(tagsToInput(entry.tags))}" placeholder="#タグA #タグB"></label>
+          <label>話ごとのメモ<textarea data-entry-field="memo">${escapeHTML(entry.memo || '')}</textarea></label>
+        </aside>
+        <section class="card">
+          <div class="form-grid">
+            <label>ルートタイトル<input data-route-field="title" value="${escapeHTML(route.title)}"></label>
+            <label>ルート種別<select data-route-field="type">${renderOptions(routeTypeLabels, route.type)}</select></label>
+            <label>ルート状態<select data-route-field="status">${renderOptions(statusLabels, route.status)}</select></label>
+            <label>ルートタグ<input data-route-field="tags" value="${escapeHTML(tagsToInput(route.tags))}" placeholder="#タグA #タグB"></label>
+            <label class="full">ルートメモ<textarea data-route-field="memo">${escapeHTML(route.memo || '')}</textarea></label>
+            <label class="full">ページタイトル<input data-page-field="title" value="${escapeHTML(page.title || `${pageIndex + 1}ページ`)}"></label>
+            <label class="full">本文：${pageIndex + 1}ページ目<textarea class="editor-textarea" data-page-field="body" placeholder="ここに本文を入力">${escapeHTML(page.body || '')}</textarea></label>
+          </div>
+          <div class="toolbar">
+            <span class="badge light">このページ ${charCountText(page.body).toLocaleString()}字</span>
+            <span class="badge light">全文 ${routeChars(route).toLocaleString()}字</span>
+            <span class="badge light">自動保存</span>
+            <button class="danger-button small" data-action="delete-route">このルートをゴミ箱へ</button>
+          </div>
+        </section>
+      </div>
+    `;
+    bindEditor(series, entry, route, pageIndex);
+  }
+
+  function renderOptions(map, selected) {
+    return Object.entries(map).map(([value, label]) => `<option value="${value}" ${value === selected ? 'selected' : ''}>${escapeHTML(label)}</option>`).join('');
+  }
+
+  function bindEditor(series, entry, route, pageIndex = 0) {
+    content.onclick = async (event) => {
+      const target = event.target.closest('[data-action]');
+      if (!target || !content.contains(target)) return;
+      const action = target.dataset.action;
+      const pages = normalizeRoutePages(route);
+      if (action === 'back-detail') return navigate('seriesDetail', { seriesId: series.id, tab: 'stories' });
+      if (action === 'read-current') return navigate('reader', { seriesId: series.id, entryId: entry.id, routeId: route.id, pageIndex });
+      if (action === 'save-now') { await saveEncryptedState(true); return toastMessage('保存しました。'); }
+      if (action === 'switch-route') return navigate('editor', { seriesId: series.id, entryId: entry.id, routeId: target.dataset.route, pageIndex: 0 });
+      if (action === 'switch-page') {
+        const targetPage = Number(target.dataset.page || 0);
+        return navigate('editor', { seriesId: series.id, entryId: entry.id, routeId: route.id, pageIndex: Math.min(Math.max(targetPage, 0), pages.length - 1) });
+      }
+      if (action === 'add-page') {
+        const newPage = makePage(`${pages.length + 1}ページ`, '', pages.length);
+        pages.push(newPage);
+        normalizeRoutePages(route);
+        const newIndex = normalizeRoutePages(route).findIndex((item) => item.id === newPage.id);
+        route.updatedAt = nowISO();
+        entry.updatedAt = nowISO();
+        touchSeries(series);
+        await saveEncryptedState(true);
+        return navigate('editor', { seriesId: series.id, entryId: entry.id, routeId: route.id, pageIndex: Math.max(0, newIndex) });
+      }
+      if (action === 'delete-page') {
+        if (pages.length <= 1) return toastMessage('1ページ目は削除できません。');
+        pages.splice(pageIndex, 1);
+        normalizeRoutePages(route);
+        route.updatedAt = nowISO();
+        entry.updatedAt = nowISO();
+        touchSeries(series);
+        await saveEncryptedState(true);
+        return navigate('editor', { seriesId: series.id, entryId: entry.id, routeId: route.id, pageIndex: Math.max(0, pageIndex - 1) });
+      }
+      if (action === 'move-page-up' || action === 'move-page-down') {
+        const direction = action === 'move-page-up' ? -1 : 1;
+        const fromIndex = Math.min(Math.max(Number(target.dataset.page ?? pageIndex), 0), pages.length - 1);
+        const nextIndex = fromIndex + direction;
+        if (nextIndex < 0 || nextIndex >= pages.length) return;
+        [pages[fromIndex], pages[nextIndex]] = [pages[nextIndex], pages[fromIndex]];
+        pages.forEach((item, index) => (item.order = index));
+        normalizeRoutePages(route);
+        route.updatedAt = nowISO();
+        entry.updatedAt = nowISO();
+        touchSeries(series);
+        await saveEncryptedState(true);
+        return navigate('editor', { seriesId: series.id, entryId: entry.id, routeId: route.id, pageIndex: nextIndex });
+      }
+      if (action === 'new-route') return openRouteModal(series, entry, route);
+      if (action === 'copy-route') return copyRoute(series, entry, route);
+      if (action === 'delete-route') return confirmDeleteRoute(series, entry, route);
+    };
+    content.oninput = (event) => {
+      const target = event.target;
+      const pages = normalizeRoutePages(route);
+      const page = pages[pageIndex] || pages[0];
+      if (target.dataset.entryField) {
+        const field = target.dataset.entryField;
+        entry[field] = field === 'tags' ? parseTags(target.value) : target.value;
+        entry.updatedAt = nowISO();
+        touchSeries(series);
+        saveEncryptedState();
+      }
+      if (target.dataset.routeField) {
+        const field = target.dataset.routeField;
+        route[field] = field === 'tags' ? parseTags(target.value) : target.value;
+        route.updatedAt = nowISO();
+        entry.updatedAt = nowISO();
+        touchSeries(series);
+        saveEncryptedState();
+      }
+      if (target.dataset.pageField && page) {
+        const field = target.dataset.pageField;
+        page[field] = target.value;
+        page.updatedAt = nowISO();
+        route.updatedAt = nowISO();
+        entry.updatedAt = nowISO();
+        normalizeRoutePages(route);
+        touchSeries(series);
+        saveEncryptedState();
+        if (field === 'body') {
+          const badges = content.querySelectorAll('.toolbar .badge.light');
+          if (badges[0]) badges[0].textContent = `このページ ${charCountText(target.value).toLocaleString()}字`;
+          if (badges[1]) badges[1].textContent = `全文 ${routeChars(route).toLocaleString()}字`;
+        }
+      }
+    };
+  }
+
+  function renderReader(seriesId, entryId, routeId) {
+    const series = getSeries(seriesId);
+    const entry = getEntry(seriesId, entryId);
+    const route = getRoute(seriesId, entryId, routeId);
+    if (!series || !entry || !route) return navigate('reading');
+    setTitle('読む');
+    const s = state.settings;
+    const pages = normalizeRoutePages(route);
+    const requestedPageIndex = Object.prototype.hasOwnProperty.call(current, 'pageIndex')
+      ? Number(current.pageIndex)
+      : Number(route.read?.pageIndex || 0);
+    const pageIndex = Math.min(Math.max(Number.isFinite(requestedPageIndex) ? requestedPageIndex : 0, 0), pages.length - 1);
+    const page = pages[pageIndex];
+    const maxWidth = '100%';
+    const groups = orderedEpisodeGroups(series);
+    const groupIndex = groups.findIndex((group) => group.entries.some((item) => item.id === entry.id));
+    const group = groups[groupIndex] || findEpisodeGroup(series, entry);
+    const prev = getPrevEntryTarget(series, entry);
+    const nextTargets = getNextEntryTargets(series, entry);
+    const otherRoutes = (group?.targets || [])
+      .filter((item) => item.route.id !== route.id)
+      .sort((a, b) => compareRoutes(a.route, b.route));
+    const settingsOpen = current.readerSettingsOpen === true;
+    const pageLabel = pages.length > 1 ? ` ・ ${pageIndex + 1}/${pages.length}ページ` : '';
+    content.innerHTML = `
+      <div class="reader-screen mode-${s.readerMode}">
+      <div class="reader-page-head">
+        <div>
+          <button class="text-button" data-action="back-reading">← 読む一覧へ</button>
+          <h2>${escapeHTML(entry.title)}</h2>
+          <p class="muted">${escapeHTML(series.title)} / ${escapeHTML(route.title)} ・ ${groupIndex + 1}/${groups.length}話${pageLabel}</p>
+        </div>
+        <div class="actions">
+          <button class="ghost" data-action="bookmark">しおり</button>
+          <button class="primary" data-action="toggle-reader-settings">読書設定</button>
+        </div>
+      </div>
+      <div class="reader-settings-panel ${settingsOpen ? 'open' : ''}" aria-hidden="${settingsOpen ? 'false' : 'true'}">
+        <div class="reader-settings-box">
+          <div class="reader-setting-row">
+            <span class="reader-setting-label">読み方</span>
+            <div class="segmented">
+              <button data-setting="readerMode" data-value="horizontal" class="${s.readerMode === 'horizontal' ? 'active' : ''}">横読み</button>
+              <button data-setting="readerMode" data-value="vertical" class="${s.readerMode === 'vertical' ? 'active' : ''}">縦読み</button>
+            </div>
+          </div>
+          <div class="reader-setting-row">
+            <span class="reader-setting-label">フォント</span>
+            <div class="segmented">
+              <button data-setting="readerFont" data-value="mincho" class="${s.readerFont === 'mincho' ? 'active' : ''}">明朝</button>
+              <button data-setting="readerFont" data-value="gothic" class="${s.readerFont === 'gothic' ? 'active' : ''}">ゴシック</button>
+            </div>
+          </div>
+          <div class="reader-setting-row">
+            <span class="reader-setting-label">背景</span>
+            <div class="segmented">
+              <button data-setting="readerTheme" data-value="light" class="${s.readerTheme === 'light' ? 'active' : ''}">白</button>
+              <button data-setting="readerTheme" data-value="ecru" class="${s.readerTheme === 'ecru' ? 'active' : ''}">生成り</button>
+              <button data-setting="readerTheme" data-value="dark" class="${s.readerTheme === 'dark' ? 'active' : ''}">黒</button>
+            </div>
+          </div>
+          <div class="reader-setting-row">
+            <span class="reader-setting-label">調整</span>
+            <label class="reader-setting-range">文字サイズ<input type="range" min="13" max="30" value="${s.fontSize}" data-range="fontSize"></label>
+            <label class="reader-setting-range">行間<input type="range" min="1.3" max="2.6" step="0.1" value="${s.lineHeight}" data-range="lineHeight"></label>
+          </div>
+          <div class="reader-setting-row">
+            <span class="reader-setting-label">その他</span>
+            <button class="ghost small" data-action="mark-read">読了</button>
+            <button class="secondary small" data-action="favorite-scene">選択箇所を保存</button>
+          </div>
+        </div>
+      </div>
+      ${otherRoutes.length ? `<div class="reader-alt-routes"><span class="muted micro">この話の別ルート</span>${otherRoutes.map((item) => `<button class="secondary small" data-action="jump-route" data-entry="${item.entry.id}" data-route="${item.route.id}">${routeTypeLabels[item.route.type] || item.route.type}：${escapeHTML(item.route.title)}</button>`).join('')}</div>` : ''}
+      <div class="card reader-minimal-card">
+        <article id="readerBox" class="reader ${s.readerMode} ${s.readerFont} ${s.readerTheme}" style="font-size:${s.fontSize}px; line-height:${s.lineHeight}; max-width:${maxWidth}; margin-inline:auto;">
+          <p class="reader-text">${escapeHTML(page.body || '本文がまだありません。')}</p>
+          <div class="reader-end-nav" aria-label="ページ移動">
+            <p class="reader-end-nav-title">${escapeHTML(page.title || `${pageIndex + 1}ページ`)} / ${escapeHTML(group?.title || entry.title)}</p>
+            <div class="reader-end-nav-buttons">
+              ${pageIndex > 0 ? `<button class="ghost" data-action="go-page" data-page="${pageIndex - 1}">前ページ</button>` : (prev ? `<button class="ghost" data-action="go-route" data-series="${prev.series.id}" data-entry="${prev.entry.id}" data-route="${prev.route.id}" data-page="${Math.max(0, normalizeRoutePages(prev.route).length - 1)}">前の話</button>` : `<button class="ghost" disabled>戻る</button>`)}
+              ${pageIndex < pages.length - 1 ? `<button class="primary" data-action="go-page" data-page="${pageIndex + 1}">次ページ</button>` : (nextTargets.length ? nextTargets.map((item) => `<button class="primary" data-action="go-route" data-series="${item.series.id}" data-entry="${item.entry.id}" data-route="${item.route.id}" data-page="0">次へ${nextTargets.length > 1 ? `：${escapeHTML(routeTypeLabels[item.route.type] || item.route.type)} ${escapeHTML(item.route.title)}` : ''}</button>`).join('') : `<button class="ghost" disabled>最後の話です</button>`)}
+            </div>
+          </div>
+        </article>
+      </div>
+      <div class="card reader-nav-card">
+        <div class="reader-nav-grid">
+          <div>${pageIndex > 0 ? `<button class="ghost" data-action="go-page" data-page="${pageIndex - 1}">← 前ページ</button>` : (prev ? `<button class="ghost" data-action="go-route" data-series="${prev.series.id}" data-entry="${prev.entry.id}" data-route="${prev.route.id}" data-page="${Math.max(0, normalizeRoutePages(prev.route).length - 1)}">← 前の話</button>` : `<button class="ghost" disabled>← 戻る</button>`)}</div>
+          <div class="reader-nav-center">${escapeHTML(page.title || `${pageIndex + 1}ページ`)} / ${escapeHTML(group?.title || entry.title)}</div>
+          <div class="reader-branch-list">
+            ${pageIndex < pages.length - 1 ? `<button class="primary" data-action="go-page" data-page="${pageIndex + 1}">次ページ →</button>` : (nextTargets.length ? nextTargets.map((item) => `<button class="primary" data-action="go-route" data-series="${item.series.id}" data-entry="${item.entry.id}" data-route="${item.route.id}" data-page="0">次へ${nextTargets.length > 1 ? `：${escapeHTML(routeTypeLabels[item.route.type] || item.route.type)} ${escapeHTML(item.route.title)}` : ''} →</button>`).join('') : `<button class="ghost" disabled>最後の話です</button>`)}
+          </div>
+        </div>
+      </div>
+      </div>
+      <div class="grid reader-extra-panels" style="margin-top:14px">
+        <div class="card span-6"><h3>しおり</h3>${route.bookmarks.length ? `<div class="list">${route.bookmarks.map((b) => `<div class="item"><p class="item-title">${Number.isFinite(Number(b.pageIndex)) ? `${Number(b.pageIndex) + 1}ページ ・ ` : ''}${Math.round((b.position || 0) * 100)}%</p><p class="item-sub">${formatDate(b.createdAt)}</p><button class="ghost small" data-action="jump-bookmark" data-page="${b.pageIndex || 0}" data-position="${b.position}">移動</button></div>`).join('')}</div>` : '<div class="empty">まだありません。</div>'}</div>
+        <div class="card span-6"><h3>お気に入りシーン</h3>${route.favoriteScenes.length ? `<div class="list">${route.favoriteScenes.map((f) => `<div class="item"><p class="item-body">${escapeHTML(f.quote)}</p><p class="item-sub">${Number.isFinite(Number(f.pageIndex)) ? `${Number(f.pageIndex) + 1}ページ ・ ` : ''}${formatDate(f.createdAt)}</p></div>`).join('')}</div>` : '<div class="empty">本文を選択して保存できます。</div>'}</div>
+      </div>
+    `;
+    bindReader(series, entry, route, pageIndex);
+    restoreReaderPosition(route, pageIndex);
+  }
+
+  function bindReader(series, entry, route, pageIndex = 0) {
+    const reader = $('#readerBox', content);
+    const pages = normalizeRoutePages(route);
+    let scrollTimer = null;
+    reader.addEventListener('scroll', () => {
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => {
+        const pagePosition = getReaderPosition(reader, state.settings.readerMode);
+        route.read.pageIndex = pageIndex;
+        route.read.pagePosition = pagePosition;
+        route.read.position = Math.min(1, (pageIndex + pagePosition) / Math.max(1, pages.length));
+        route.read.updatedAt = nowISO();
+        state.lastRead = { seriesId: series.id, entryId: entry.id, routeId: route.id, pageIndex, at: nowISO() };
+        saveEncryptedState();
+      }, 250);
+    });
+    content.onclick = async (event) => {
+      const target = event.target.closest('button');
+      if (!target) return;
+      if (target.dataset.setting) {
+        state.settings[target.dataset.setting] = target.dataset.value;
+        current.readerSettingsOpen = true;
+        await saveEncryptedState(true);
+        return renderReader(series.id, entry.id, route.id);
+      }
+      const action = target.dataset.action;
+      if (action === 'back-reading') return navigate('reading');
+      if (action === 'toggle-reader-settings') {
+        current.readerSettingsOpen = !current.readerSettingsOpen;
+        return renderReader(series.id, entry.id, route.id);
+      }
+      if (action === 'go-page') {
+        const targetPage = Number(target.dataset.page || 0);
+        route.read.pageIndex = Math.min(Math.max(targetPage, 0), Math.max(0, pages.length - 1));
+        route.read.pagePosition = 0;
+        route.read.position = Math.min(1, route.read.pageIndex / Math.max(1, pages.length));
+        route.read.updatedAt = nowISO();
+        state.lastRead = { seriesId: series.id, entryId: entry.id, routeId: route.id, pageIndex: route.read.pageIndex, at: nowISO() };
+        saveEncryptedState();
+        return navigate('reader', { seriesId: series.id, entryId: entry.id, routeId: route.id, pageIndex: route.read.pageIndex, pendingReaderPosition: 0 });
+      }
+      if (action === 'go-route' || action === 'jump-route') return navigate('reader', { seriesId: target.dataset.series || series.id, entryId: target.dataset.entry, routeId: target.dataset.route, pageIndex: Number(target.dataset.page || 0), readerSettingsOpen: false, pendingReaderPosition: 0 });
+      if (action === 'bookmark') {
+        route.bookmarks.push({ id: uid('bookmark'), pageIndex, position: getReaderPosition(reader, state.settings.readerMode), createdAt: nowISO() });
+        route.read.updatedAt = nowISO();
+        await saveEncryptedState(true);
+        toastMessage('しおりを保存しました。');
+        return renderReader(series.id, entry.id, route.id);
+      }
+      if (action === 'mark-read') {
+        route.read.completed = true;
+        route.read.pageIndex = Math.max(0, pages.length - 1);
+        route.read.pagePosition = 1;
+        route.read.position = 1;
+        route.read.updatedAt = nowISO();
+        entry.readDone = true;
+        state.lastRead = { seriesId: series.id, entryId: entry.id, routeId: route.id, pageIndex: Math.max(0, pages.length - 1), at: nowISO() };
+        await saveEncryptedState(true);
+        toastMessage('読了にしました。');
+        current.readerSettingsOpen = true;
+        return renderReader(series.id, entry.id, route.id);
+      }
+      if (action === 'favorite-scene') {
+        const selection = String(window.getSelection?.() || '').trim();
+        if (!selection) return toastMessage('保存したい本文を選択してください。');
+        route.favoriteScenes.push({ id: uid('scene'), pageIndex, quote: selection.slice(0, 800), createdAt: nowISO() });
+        await saveEncryptedState(true);
+        toastMessage('お気に入りシーンに保存しました。');
+        current.readerSettingsOpen = true;
+        return renderReader(series.id, entry.id, route.id);
+      }
+      if (action === 'jump-bookmark') {
+        const bookmarkPage = Number(target.dataset.page || 0);
+        const position = Number(target.dataset.position || 0);
+        if (bookmarkPage !== pageIndex) return navigate('reader', { seriesId: series.id, entryId: entry.id, routeId: route.id, pageIndex: bookmarkPage, pendingReaderPosition: position });
+        setReaderPosition(reader, position, state.settings.readerMode);
+      }
+    };
+    content.oninput = async (event) => {
+      const target = event.target;
+      if (target.dataset.range) {
+        state.settings[target.dataset.range] = Number(target.value);
+        current.readerSettingsOpen = true;
+        await saveEncryptedState(true);
+        renderReader(series.id, entry.id, route.id);
+      }
+    };
+  }
+
+  function getReaderPosition(el, mode) {
+    if (mode === 'vertical') {
+      const max = Math.max(1, el.scrollWidth - el.clientWidth);
+      return Math.min(1, Math.max(0, Math.abs(el.scrollLeft) / max));
+    }
+    const max = Math.max(1, el.scrollHeight - el.clientHeight);
+    return Math.min(1, Math.max(0, el.scrollTop / max));
+  }
+
+  function setReaderPosition(el, position, mode) {
+    if (mode === 'vertical') {
+      const max = Math.max(1, el.scrollWidth - el.clientWidth);
+      el.scrollLeft = -Math.round(max * position);
+    } else {
+      const max = Math.max(1, el.scrollHeight - el.clientHeight);
+      el.scrollTop = Math.round(max * position);
+    }
+  }
+
+  function restoreReaderPosition(route, pageIndex = 0) {
+    setTimeout(() => {
+      const reader = $('#readerBox', content);
+      if (!reader) return;
+      const pending = Number.isFinite(Number(current.pendingReaderPosition)) ? Number(current.pendingReaderPosition) : null;
+      if (pending !== null) {
+        delete current.pendingReaderPosition;
+        setReaderPosition(reader, pending, state.settings.readerMode);
+        return;
+      }
+      const samePage = Number(route.read?.pageIndex || 0) === Number(pageIndex);
+      setReaderPosition(reader, samePage ? (route.read?.pagePosition || 0) : 0, state.settings.readerMode);
+    }, 120);
+  }
+
+  function renderIdeas() {
+    setTitle('ネタ帳');
+    const ideas = state.ideas.slice().sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    content.innerHTML = `
+      <div class="view-head">
+        <div><h2>ネタ帳</h2><p class="muted">思いついたメモを保存して、話やルートに変換できます。</p></div>
+        <div class="actions"><button class="primary" data-action="new-idea">ネタ追加</button></div>
+      </div>
+      ${ideas.length ? `<div class="list">${ideas.map(renderIdeaCard).join('')}</div>` : '<div class="empty">まだネタがありません。</div>'}
+    `;
+    content.onclick = async (event) => {
+      const target = event.target.closest('button');
+      if (!target) return;
+      const idea = state.ideas.find((item) => item.id === target.dataset.idea);
+      const action = target.dataset.action;
+      if (action === 'new-idea') return openIdeaModal();
+      if (!idea) return;
+      if (action === 'edit-idea') return openIdeaModal(idea);
+      if (action === 'idea-to-entry') return openIdeaToEntryModal(idea);
+      if (action === 'idea-to-route') return openIdeaToRouteModal(idea);
+      if (action === 'delete-idea') return deleteIdea(idea);
+    };
+  }
+
+  function renderIdeaCard(idea) {
+    const linked = idea.seriesId ? getSeries(idea.seriesId)?.title : '';
+    return `
+      <div class="item">
+        <div class="item-head">
+          <div><p class="item-title">${escapeHTML(idea.title)}</p><p class="item-sub">${statusLabels[idea.status] || idea.status}${linked ? ` ・ ${escapeHTML(linked)}` : ''} ・ 更新 ${formatDate(idea.updatedAt)}</p></div>
+          <div class="actions"><button class="secondary small" data-action="edit-idea" data-idea="${idea.id}">編集</button></div>
+        </div>
+        ${idea.body ? `<p class="item-body">${escapeHTML(idea.body.slice(0, 280))}${idea.body.length > 280 ? '…' : ''}</p>` : ''}
+        ${renderTags(idea.tags, true)}
+        <div class="toolbar">
+          <button class="ghost small" data-action="idea-to-entry" data-idea="${idea.id}">話にする</button>
+          <button class="ghost small" data-action="idea-to-route" data-idea="${idea.id}">IF/別ルートにする</button>
+          <button class="danger-button small" data-action="delete-idea" data-idea="${idea.id}">ゴミ箱へ</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderTagView() {
+    setTitle('タグ');
+    const tagCounts = collectTags();
+    const selected = current.tag || '';
+    const results = selected ? findByTag(selected) : null;
+    content.innerHTML = `
+      <div class="view-head">
+        <div><h2>タグ</h2><p class="muted">シリーズ・話・ルート・ネタをハッシュタグで分類できます。</p></div>
+      </div>
+      <div class="card">
+        ${tagCounts.length ? `<div class="tag-row">${tagCounts.map((item) => `<button class="tag ${item.tag === selected ? '' : 'soft'}" data-action="open-tag" data-tag="${escapeHTML(item.tag)}">#${escapeHTML(item.tag)} <span>${item.total}</span></button>`).join('')}</div>` : '<div class="empty">タグはまだありません。</div>'}
+      </div>
+      ${selected ? renderTagResults(selected, results) : ''}
+    `;
+    content.onclick = (event) => {
+      const target = event.target.closest('button');
+      if (!target) return;
+      if (target.dataset.action === 'open-tag') return navigate('tags', { tag: target.dataset.tag });
+      if (target.dataset.action === 'read-route') return navigate('reader', { seriesId: target.dataset.series, entryId: target.dataset.entry, routeId: target.dataset.route });
+      if (target.dataset.action === 'open-series') return navigate('seriesDetail', { seriesId: target.dataset.series, tab: 'stories' });
+      if (target.dataset.action === 'edit-idea') return openIdeaModal(state.ideas.find((idea) => idea.id === target.dataset.idea));
+    };
+  }
+
+  function collectTags() {
+    const counts = new Map();
+    const add = (tag, key) => {
+      if (!tag) return;
+      const item = counts.get(tag) || { tag, series: new Set(), entries: new Set(), routes: new Set(), ideas: new Set() };
+      if (key.series) item.series.add(key.series);
+      if (key.entry) item.entries.add(key.entry);
+      if (key.route) item.routes.add(key.route);
+      if (key.idea) item.ideas.add(key.idea);
+      counts.set(tag, item);
+    };
+    state.series.forEach((series) => {
+      (series.tags || []).forEach((tag) => add(tag, { series: series.id }));
+      series.entries.forEach((entry) => {
+        (entry.tags || []).forEach((tag) => add(tag, { series: series.id, entry: entry.id }));
+        entry.routes.forEach((route) => (route.tags || []).forEach((tag) => add(tag, { series: series.id, entry: entry.id, route: route.id })));
+      });
+    });
+    state.ideas.forEach((idea) => (idea.tags || []).forEach((tag) => add(tag, { idea: idea.id })));
+    return Array.from(counts.values()).map((item) => ({ ...item, total: item.series.size + item.entries.size + item.routes.size + item.ideas.size }))
+      .sort((a, b) => b.total - a.total || a.tag.localeCompare(b.tag, 'ja'));
+  }
+
+  function findByTag(tag) {
+    const results = { series: [], entries: [], routes: [], ideas: [] };
+    state.series.forEach((series) => {
+      if ((series.tags || []).includes(tag)) results.series.push(series);
+      series.entries.forEach((entry) => {
+        if ((entry.tags || []).includes(tag)) results.entries.push({ series, entry });
+        entry.routes.forEach((route) => {
+          if ((route.tags || []).includes(tag)) results.routes.push({ series, entry, route });
+        });
+      });
+    });
+    state.ideas.forEach((idea) => {
+      if ((idea.tags || []).includes(tag)) results.ideas.push(idea);
+    });
+    return results;
+  }
+
+  function renderTagResults(tag, results) {
+    return `
+      <div class="grid" style="margin-top:14px">
+        <div class="card span-6"><h3>#${escapeHTML(tag)} のシリーズ</h3>${results.series.length ? `<div class="list">${results.series.map((series) => `<div class="item"><p class="item-title">${escapeHTML(series.title)}</p><button class="ghost small" data-action="open-series" data-series="${series.id}">開く</button></div>`).join('')}</div>` : '<div class="empty">なし</div>'}</div>
+        <div class="card span-6"><h3>#${escapeHTML(tag)} の話</h3>${results.entries.length ? `<div class="list">${results.entries.map(({ series, entry }) => `<div class="item"><p class="item-title">${escapeHTML(entry.title)}</p><p class="item-sub">${escapeHTML(series.title)}</p><button class="ghost small" data-action="open-series" data-series="${series.id}">開く</button></div>`).join('')}</div>` : '<div class="empty">なし</div>'}</div>
+        <div class="card span-6"><h3>#${escapeHTML(tag)} のルート</h3>${results.routes.length ? `<div class="list">${results.routes.map(({ series, entry, route }) => renderMiniRoute(series.id, entry.id, route.id)).join('')}</div>` : '<div class="empty">なし</div>'}</div>
+        <div class="card span-6"><h3>#${escapeHTML(tag)} のネタ</h3>${results.ideas.length ? `<div class="list">${results.ideas.map((idea) => `<div class="item"><p class="item-title">${escapeHTML(idea.title)}</p><button class="ghost small" data-action="edit-idea" data-idea="${idea.id}">開く</button></div>`).join('')}</div>` : '<div class="empty">なし</div>'}</div>
+      </div>
+    `;
+  }
+
+  function renderSearch() {
+    setTitle('検索');
+    const query = current.query || '';
+    const results = query ? searchAll(query) : [];
+    content.innerHTML = `
+      <div class="view-head"><div><h2>検索</h2><p class="muted">タイトル・本文・メモをまとめて検索します。</p></div></div>
+      <div class="card">
+        <div class="searchbar"><input id="searchInput" value="${escapeHTML(query)}" placeholder="検索ワード"><button class="primary" data-action="search">検索</button></div>
+      </div>
+      <div style="margin-top:14px">${query ? (results.length ? `<div class="list">${results.map(renderSearchResult).join('')}</div>` : '<div class="empty">見つかりませんでした。</div>') : ''}</div>
+    `;
+    $('#searchInput', content)?.focus();
+    content.onclick = (event) => {
+      const target = event.target.closest('button');
+      if (!target) return;
+      if (target.dataset.action === 'search') return navigate('search', { query: $('#searchInput', content).value.trim() });
+      if (target.dataset.action === 'read-route') return navigate('reader', { seriesId: target.dataset.series, entryId: target.dataset.entry, routeId: target.dataset.route });
+      if (target.dataset.action === 'open-series') return navigate('seriesDetail', { seriesId: target.dataset.series, tab: 'stories' });
+      if (target.dataset.action === 'edit-idea') return openIdeaModal(state.ideas.find((idea) => idea.id === target.dataset.idea));
+    };
+    content.onkeydown = (event) => {
+      if (event.key === 'Enter' && event.target.id === 'searchInput') navigate('search', { query: event.target.value.trim() });
+    };
+  }
+
+  function searchAll(query) {
+    const q = query.toLowerCase();
+    const results = [];
+    state.series.forEach((series) => {
+      const seriesText = [series.title, series.description, Object.values(series.notes || {}).join('\n'), (series.tags || []).join(' ')].join('\n').toLowerCase();
+      if (seriesText.includes(q)) results.push({ type: 'series', series });
+      series.entries.forEach((entry) => {
+        const entryText = [entry.title, entry.memo, (entry.tags || []).join(' ')].join('\n').toLowerCase();
+        if (entryText.includes(q)) results.push({ type: 'entry', series, entry });
+        entry.routes.forEach((route) => {
+          const routeText = [route.title, route.memo, routeBody(route), (route.tags || []).join(' ')].join('\n').toLowerCase();
+          if (routeText.includes(q)) results.push({ type: 'route', series, entry, route });
+        });
+      });
+    });
+    state.ideas.forEach((idea) => {
+      const text = [idea.title, idea.body, (idea.tags || []).join(' ')].join('\n').toLowerCase();
+      if (text.includes(q)) results.push({ type: 'idea', idea });
+    });
+    return results.slice(0, 100);
+  }
+
+  function renderSearchResult(result) {
+    if (result.type === 'series') return `<div class="item"><p class="item-title">シリーズ：${escapeHTML(result.series.title)}</p><button class="ghost small" data-action="open-series" data-series="${result.series.id}">開く</button></div>`;
+    if (result.type === 'entry') return `<div class="item"><p class="item-title">話：${escapeHTML(result.entry.title)}</p><p class="item-sub">${escapeHTML(result.series.title)}</p><button class="ghost small" data-action="open-series" data-series="${result.series.id}">開く</button></div>`;
+    if (result.type === 'route') return renderMiniRoute(result.series.id, result.entry.id, result.route.id);
+    return `<div class="item"><p class="item-title">ネタ：${escapeHTML(result.idea.title)}</p><button class="ghost small" data-action="edit-idea" data-idea="${result.idea.id}">開く</button></div>`;
+  }
+
+  function renderTrash() {
+    setTitle('ゴミ箱');
+    content.innerHTML = `
+      <div class="view-head"><div><h2>ゴミ箱</h2><p class="muted">削除したものを一時的に残します。</p></div></div>
+      ${state.trash.length ? `<div class="list">${state.trash.map((item) => `<div class="item"><p class="item-title">${escapeHTML(item.label || item.type)}</p><p class="item-sub">${escapeHTML(item.type)} ・ ${formatDate(item.deletedAt)}</p><div class="toolbar"><button class="ghost small" data-action="restore" data-trash="${item.id}">復元</button><button class="danger-button small" data-action="delete-final" data-trash="${item.id}">完全削除</button></div></div>`).join('')}</div>` : '<div class="empty">ゴミ箱は空です。</div>'}
+    `;
+    content.onclick = async (event) => {
+      const target = event.target.closest('button');
+      if (!target) return;
+      const trashId = target.dataset.trash;
+      if (target.dataset.action === 'restore') return restoreTrash(trashId);
+      if (target.dataset.action === 'delete-final') return finalDeleteTrash(trashId);
+    };
+  }
+
+  function renderBackup() {
+    setTitle('バックアップ');
+    const backup = JSON.stringify({ exportedAt: nowISO(), state }, null, 2);
+    content.innerHTML = `
+      <div class="view-head"><div><h2>バックアップ</h2><p class="muted">データをファイルとして保存・復元できます。</p></div></div>
+      <div class="grid">
+        <div class="card span-6">
+          <h3>バックアップ作成</h3>
+          <p class="muted">今のデータをJSONファイルとして端末に保存します。</p>
+          <button class="primary" data-action="export-json">バックアップを作成</button>
+        </div>
+        <div class="card span-6">
+          <h3>バックアップ復元</h3>
+          <p class="muted">バックアップファイルから復元します。追加ではなく、現在のデータを置き換えます。</p>
+          <input class="file-input" type="file" id="importFile" accept="application/json,.json">
+          <button class="ghost" data-action="import-json">選んだファイルから復元</button>
+        </div>
+        <div class="card span-12">
+          <h3>中身確認用</h3>
+          <textarea class="codebox" readonly>${escapeHTML(backup.slice(0, 12000))}${backup.length > 12000 ? '\n...省略...' : ''}</textarea>
+        </div>
+      </div>
+    `;
+    content.onclick = async (event) => {
+      const target = event.target.closest('button');
+      if (!target) return;
+      if (target.dataset.action === 'export-json') return exportJSON();
+      if (target.dataset.action === 'import-json') return importJSON();
+    };
+  }
+
+  function renderSettings() {
+    setTitle('設定');
+    const s = state.settings;
+    content.innerHTML = `
+      <div class="view-head"><div><h2>設定</h2><p class="muted">読みやすさ・ロックなどの設定です。</p></div></div>
+      <div class="grid">
+        <div class="card span-12">
+          <h3>読書設定</h3>
+          <div class="form-grid">
+            <label>初期の読み方<select data-setting-field="readerMode"><option value="horizontal" ${s.readerMode === 'horizontal' ? 'selected' : ''}>横読み</option><option value="vertical" ${s.readerMode === 'vertical' ? 'selected' : ''}>縦読み</option></select></label>
+            <label>初期フォント<select data-setting-field="readerFont"><option value="mincho" ${s.readerFont === 'mincho' ? 'selected' : ''}>明朝</option><option value="gothic" ${s.readerFont === 'gothic' ? 'selected' : ''}>ゴシック</option></select></label>
+            <label>初期背景<select data-setting-field="readerTheme"><option value="light" ${s.readerTheme === 'light' ? 'selected' : ''}>白</option><option value="ecru" ${s.readerTheme === 'ecru' ? 'selected' : ''}>生成り</option><option value="dark" ${s.readerTheme === 'dark' ? 'selected' : ''}>黒</option></select></label>
+            <label>初期文字サイズ<input type="number" data-setting-field="fontSize" value="${s.fontSize}" min="12" max="36"></label>
+            <label>初期行間<input type="number" data-setting-field="lineHeight" value="${s.lineHeight}" min="1.2" max="3" step="0.1"></label>
+            <label>横読み幅<input type="number" data-setting-field="contentWidth" value="${s.contentWidth}" min="420" max="1200"></label>
+          </div>
+        </div>
+        <div class="card span-12">
+          <h3>クラウド同期</h3>
+          <p class="muted">状態：${escapeHTML(cloudStatusText())}</p>
+          ${cloudMessage ? `<p class="muted">${escapeHTML(cloudMessage)}</p>` : ''}
+          ${!isFirebaseConfigured() ? '<p class="muted">Firebase設定が未入力です。index.html内の firebaseConfig を確認してください。</p>' : ''}
+          <div class="form-grid">
+            <label>メールアドレス<input id="cloudEmail" type="email" autocomplete="username" placeholder="mail@example.com"></label>
+            <label>パスワード<input id="cloudPassword" type="password" autocomplete="current-password" placeholder="Firebaseログイン用"></label>
+            <label class="full check-row"><input type="checkbox" data-setting-field="cloudAutoSync" ${s.cloudAutoSync ? 'checked' : ''}> 保存時に自動でクラウドへ送る</label>
+          </div>
+          <div class="toolbar">
+            <button class="ghost" data-action="cloud-create" ${!isFirebaseConfigured() ? 'disabled' : ''}>アカウント作成</button>
+            <button class="primary" data-action="cloud-login" ${!isFirebaseConfigured() ? 'disabled' : ''}>ログイン</button>
+            <button class="ghost" data-action="cloud-logout" ${!cloudUser ? 'disabled' : ''}>ログアウト</button>
+            <button class="primary" data-action="cloud-upload" ${!cloudUser || cloudBusy ? 'disabled' : ''}>クラウドへ保存</button>
+            <button class="ghost" data-action="cloud-download" ${!cloudUser || cloudBusy ? 'disabled' : ''}>クラウドから取得</button>
+          </div>
+          <p class="micro muted">クラウドには、アプリのパスコードで暗号化したデータを保存します。別端末で取得するときは、その時のアプリ用パスコードが必要です。</p>
+        </div>
+        <div class="card span-12">
+          <h3>ロック・初期化</h3>
+          <div class="toolbar">
+            <button class="ghost" data-action="change-passcode">パスコード変更</button>
+            <button class="danger-button" data-action="reset-all">全データ初期化</button>
+          </div>
+        </div>
+      </div>
+    `;
+    content.oninput = async (event) => {
+      const field = event.target.dataset.settingField;
+      if (!field) return;
+      const numeric = ['fontSize', 'lineHeight', 'contentWidth'].includes(field);
+      state.settings[field] = event.target.type === 'checkbox' ? event.target.checked : (numeric ? Number(event.target.value) : event.target.value);
+      await saveEncryptedState();
+    };
+    content.onclick = (event) => {
+      const target = event.target.closest('button');
+      if (!target) return;
+      if (target.dataset.action === 'change-passcode') return openPasscodeChangeModal();
+      if (target.dataset.action === 'reset-all') return confirmResetAll();
+      if (target.dataset.action === 'cloud-create') return handleCloudAuth(true);
+      if (target.dataset.action === 'cloud-login') return handleCloudAuth(false);
+      if (target.dataset.action === 'cloud-logout') return runCloudAction(() => cloudSignOut());
+      if (target.dataset.action === 'cloud-upload') return runCloudAction(() => uploadCloudData());
+      if (target.dataset.action === 'cloud-download') return runCloudAction(() => downloadCloudData());
+    };
+  }
+
+  async function handleCloudAuth(create) {
+    const email = $('#cloudEmail')?.value?.trim();
+    const password = $('#cloudPassword')?.value || '';
+    await runCloudAction(() => cloudSignIn(email, password, create));
+  }
+
+  async function runCloudAction(fn) {
+    try {
+      await fn();
+      if (current.view === 'settings') renderSettings();
+    } catch (error) {
+      console.error(error);
+      cloudMessage = error.message || 'クラウド処理に失敗しました。';
+      toastMessage(cloudMessage);
+      if (current.view === 'settings') renderSettings();
+    }
+  }
+
+  function openModal(title, bodyHTML, actionsHTML = '') {
+    modalTitle.textContent = title;
+    modalBody.innerHTML = bodyHTML;
+    modalActions.innerHTML = actionsHTML || `<button class="ghost" value="cancel">閉じる</button>`;
+    modal.showModal();
+  }
+
+  function closeModal() {
+    modal.close();
+  }
+
+  function openSeriesModal(series = null) {
+    const isEdit = Boolean(series);
+    openModal(isEdit ? 'シリーズ編集' : 'シリーズ作成', `
+      <div class="form-grid">
+        <label class="full">タイトル<input id="seriesTitle" value="${escapeHTML(series?.title || '')}" placeholder="シリーズA"></label>
+        <label>読むタブでの扱い<select id="seriesKind"><option value="series" ${(series?.kind || 'series') === 'series' ? 'selected' : ''}>シリーズもの</option><option value="single" ${(series?.kind || 'series') === 'single' ? 'selected' : ''}>単発もの</option></select></label>
+        <label class="full">説明<textarea id="seriesDescription">${escapeHTML(series?.description || '')}</textarea></label>
+        <label class="full">タグ<input id="seriesTags" value="${escapeHTML(tagsToInput(series?.tags || []))}" placeholder="#タグA #タグB"></label>
+      </div>
+    `, `<button class="ghost" value="cancel">キャンセル</button><button id="saveSeriesButton" class="primary" value="default">保存</button>`);
+    $('#saveSeriesButton', modal).onclick = async (event) => {
+      event.preventDefault();
+      const title = $('#seriesTitle', modal).value.trim() || '無題シリーズ';
+      if (series) {
+        series.title = title;
+        series.kind = $('#seriesKind', modal).value;
+        series.description = $('#seriesDescription', modal).value;
+        series.tags = parseTags($('#seriesTags', modal).value);
+        touchSeries(series);
+      } else {
+        const item = makeSeries(title);
+        item.kind = $('#seriesKind', modal).value;
+        item.description = $('#seriesDescription', modal).value;
+        item.tags = parseTags($('#seriesTags', modal).value);
+        state.series.unshift(item);
+        current.seriesId = item.id;
+      }
+      await saveEncryptedState(true);
+      closeModal();
+      toastMessage('保存しました。');
+      render();
+    };
+  }
+
+  function openChapterModal(series, chapter = null) {
+    openModal(chapter ? '章を編集' : '章を追加', `
+      <label>章タイトル<input id="chapterTitle" value="${escapeHTML(chapter?.title || '')}" placeholder="章A"></label>
+    `, `<button class="ghost" value="cancel">キャンセル</button><button id="saveChapterButton" class="primary" value="default">保存</button>`);
+    $('#saveChapterButton', modal).onclick = async (event) => {
+      event.preventDefault();
+      const title = $('#chapterTitle', modal).value.trim() || '章A';
+      if (chapter) {
+        chapter.title = title;
+        chapter.updatedAt = nowISO();
+      } else {
+        const item = makeChapter(title);
+        item.order = series.chapters.length;
+        series.chapters.push(item);
+      }
+      touchSeries(series);
+      await saveEncryptedState(true);
+      closeModal();
+      render();
+    };
+  }
+
+  function openEntryModal(series, entry = null) {
+    const chapterOptions = ['<option value="">章なし</option>', ...series.chapters.map((chapter) => `<option value="${chapter.id}" ${entry?.chapterId === chapter.id ? 'selected' : ''}>${escapeHTML(chapter.title)}</option>`)].join('');
+    openModal(entry ? '話情報を編集' : '話を追加', `
+      <div class="form-grid">
+        <label>話タイトル<input id="entryTitle" value="${escapeHTML(entry?.title || '')}" placeholder="第1話"></label>
+        <label>章<select id="entryChapter">${chapterOptions}</select></label>
+        <label>状態<select id="entryStatus">${renderOptions(statusLabels, entry?.status || 'draft')}</select></label>
+        <label>タグ<input id="entryTags" value="${escapeHTML(tagsToInput(entry?.tags || []))}" placeholder="#タグA #タグB"></label>
+        <label class="full">話ごとのメモ<textarea id="entryMemo">${escapeHTML(entry?.memo || '')}</textarea></label>
+      </div>
+    `, `<button class="ghost" value="cancel">キャンセル</button><button id="saveEntryButton" class="primary" value="default">保存</button>`);
+    $('#saveEntryButton', modal).onclick = async (event) => {
+      event.preventDefault();
+      if (entry) {
+        entry.title = $('#entryTitle', modal).value.trim() || '無題';
+        entry.chapterId = $('#entryChapter', modal).value;
+        entry.status = $('#entryStatus', modal).value;
+        entry.tags = parseTags($('#entryTags', modal).value);
+        entry.memo = $('#entryMemo', modal).value;
+        entry.updatedAt = nowISO();
+      } else {
+        const item = makeEntry($('#entryTitle', modal).value.trim() || `第${series.entries.length + 1}話`, $('#entryChapter', modal).value);
+        item.order = series.entries.length;
+        item.status = $('#entryStatus', modal).value;
+        item.tags = parseTags($('#entryTags', modal).value);
+        item.memo = $('#entryMemo', modal).value;
+        series.entries.push(item);
+        current.entryId = item.id;
+        current.routeId = item.routes[0].id;
+      }
+      touchSeries(series);
+      await saveEncryptedState(true);
+      closeModal();
+      render();
+    };
+  }
+
+  function openRouteModal(series, entry, copyFrom = null) {
+    if (!entry) return;
+    openModal('IF/別ルート追加', `
+      <div class="form-grid">
+        <label>ルート名<input id="routeTitle" value="" placeholder="ルートA"></label>
+        <label>種別<select id="routeType">${renderOptions(routeTypeLabels, 'if')}</select></label>
+        <label class="full"><input id="copyCurrent" type="checkbox" ${copyFrom ? 'checked' : ''} style="width:auto"> 現在の本文をコピーして作る</label>
+      </div>
+    `, `<button class="ghost" value="cancel">キャンセル</button><button id="saveRouteButton" class="primary" value="default">作成</button>`);
+    $('#saveRouteButton', modal).onclick = async (event) => {
+      event.preventDefault();
+      const shouldCopy = $('#copyCurrent', modal).checked && copyFrom;
+      const body = shouldCopy ? routeBody(copyFrom) : '';
+      const route = makeRoute($('#routeTitle', modal).value.trim() || 'ルートA', $('#routeType', modal).value, body);
+      if (shouldCopy) {
+        route.pages = cloneRoutePages(copyFrom);
+        route.body = routeBody(route);
+      }
+      entry.routes.push(route);
+      entry.updatedAt = nowISO();
+      touchSeries(series);
+      await saveEncryptedState(true);
+      closeModal();
+      navigate('editor', { seriesId: series.id, entryId: entry.id, routeId: route.id });
+    };
+  }
+
+  function openIdeaModal(idea = null) {
+    const seriesOptions = ['<option value="">指定なし</option>', ...state.series.map((series) => `<option value="${series.id}" ${idea?.seriesId === series.id ? 'selected' : ''}>${escapeHTML(series.title)}</option>`)].join('');
+    openModal(idea ? 'ネタ編集' : 'ネタ追加', `
+      <div class="form-grid">
+        <label>タイトル<input id="ideaTitle" value="${escapeHTML(idea?.title || '')}" placeholder="ネタA"></label>
+        <label>状態<select id="ideaStatus">${renderOptions(statusLabels, idea?.status || 'draft')}</select></label>
+        <label>関連シリーズ<select id="ideaSeries">${seriesOptions}</select></label>
+        <label>タグ<input id="ideaTags" value="${escapeHTML(tagsToInput(idea?.tags || []))}" placeholder="#タグA #タグB"></label>
+        <label class="full">メモ<textarea id="ideaBody">${escapeHTML(idea?.body || '')}</textarea></label>
+      </div>
+    `, `<button class="ghost" value="cancel">キャンセル</button><button id="saveIdeaButton" class="primary" value="default">保存</button>`);
+    $('#saveIdeaButton', modal).onclick = async (event) => {
+      event.preventDefault();
+      if (idea) {
+        idea.title = $('#ideaTitle', modal).value.trim() || 'ネタA';
+        idea.status = $('#ideaStatus', modal).value;
+        idea.seriesId = $('#ideaSeries', modal).value;
+        idea.tags = parseTags($('#ideaTags', modal).value);
+        idea.body = $('#ideaBody', modal).value;
+        idea.updatedAt = nowISO();
+      } else {
+        const item = makeIdea($('#ideaTitle', modal).value.trim() || 'ネタA');
+        item.status = $('#ideaStatus', modal).value;
+        item.seriesId = $('#ideaSeries', modal).value;
+        item.tags = parseTags($('#ideaTags', modal).value);
+        item.body = $('#ideaBody', modal).value;
+        state.ideas.unshift(item);
+      }
+      await saveEncryptedState(true);
+      closeModal();
+      toastMessage('保存しました。');
+      render();
+    };
+  }
+
+  function openIdeaToEntryModal(idea) {
+    if (!state.series.length) return toastMessage('先にシリーズを作成してください。');
+    const seriesOptions = state.series.map((series) => `<option value="${series.id}" ${idea.seriesId === series.id ? 'selected' : ''}>${escapeHTML(series.title)}</option>`).join('');
+    openModal('ネタから話を作成', `
+      <label>シリーズ<select id="targetSeries">${seriesOptions}</select></label>
+      <label>話タイトル<input id="targetEntryTitle" value="${escapeHTML(idea.title)}"></label>
+    `, `<button class="ghost" value="cancel">キャンセル</button><button id="createFromIdea" class="primary" value="default">作成</button>`);
+    $('#createFromIdea', modal).onclick = async (event) => {
+      event.preventDefault();
+      const series = getSeries($('#targetSeries', modal).value);
+      const entry = makeEntry($('#targetEntryTitle', modal).value.trim() || idea.title, '');
+      entry.memo = idea.body;
+      entry.tags = [...idea.tags];
+      entry.routes[0].tags = [...idea.tags];
+      series.entries.push(entry);
+      touchSeries(series);
+      idea.status = 'complete';
+      idea.updatedAt = nowISO();
+      await saveEncryptedState(true);
+      closeModal();
+      navigate('editor', { seriesId: series.id, entryId: entry.id, routeId: entry.routes[0].id });
+    };
+  }
+
+  function openIdeaToRouteModal(idea) {
+    const entries = [];
+    state.series.forEach((series) => series.entries.forEach((entry) => entries.push({ series, entry })));
+    if (!entries.length) return toastMessage('先に話を作成してください。');
+    const options = entries.map(({ series, entry }) => `<option value="${series.id}|${entry.id}">${escapeHTML(series.title)} / ${escapeHTML(entry.title)}</option>`).join('');
+    openModal('ネタからIF/別ルートを作成', `
+      <label>追加先<select id="targetEntry">${options}</select></label>
+      <label>ルート名<input id="targetRouteTitle" value="${escapeHTML(idea.title)}"></label>
+      <label>種別<select id="targetRouteType">${renderOptions(routeTypeLabels, 'if')}</select></label>
+    `, `<button class="ghost" value="cancel">キャンセル</button><button id="createRouteFromIdea" class="primary" value="default">作成</button>`);
+    $('#createRouteFromIdea', modal).onclick = async (event) => {
+      event.preventDefault();
+      const [seriesId, entryId] = $('#targetEntry', modal).value.split('|');
+      const series = getSeries(seriesId);
+      const entry = getEntry(seriesId, entryId);
+      const route = makeRoute($('#targetRouteTitle', modal).value.trim() || idea.title, $('#targetRouteType', modal).value, idea.body);
+      route.tags = [...idea.tags];
+      entry.routes.push(route);
+      entry.updatedAt = nowISO();
+      touchSeries(series);
+      idea.status = 'complete';
+      idea.updatedAt = nowISO();
+      await saveEncryptedState(true);
+      closeModal();
+      navigate('editor', { seriesId, entryId, routeId: route.id });
+    };
+  }
+
+  async function copyRoute(series, entry, route) {
+    const copy = JSON.parse(JSON.stringify(route));
+    copy.id = uid('route');
+    copy.title = `${route.title} コピー`;
+    copy.type = route.type === 'main' ? 'rewrite' : route.type;
+    copy.createdAt = nowISO();
+    copy.updatedAt = nowISO();
+    copy.bookmarks = [];
+    copy.favoriteScenes = [];
+    copy.read = { position: 0, pageIndex: 0, pagePosition: 0, completed: false, updatedAt: null };
+    copy.pages = cloneRoutePages(route);
+    copy.body = routeBody(copy);
+    entry.routes.push(copy);
+    entry.updatedAt = nowISO();
+    touchSeries(series);
+    await saveEncryptedState(true);
+    navigate('editor', { seriesId: series.id, entryId: entry.id, routeId: copy.id });
+  }
+
+  async function duplicateEntry(series, entryId) {
+    const entry = series.entries.find((item) => item.id === entryId);
+    if (!entry) return;
+    const copy = JSON.parse(JSON.stringify(entry));
+    copy.id = uid('entry');
+    copy.title = `${entry.title} コピー`;
+    copy.createdAt = nowISO();
+    copy.updatedAt = nowISO();
+    copy.routes = copy.routes.map((route) => {
+      const cloned = { ...route, id: uid('route'), createdAt: nowISO(), updatedAt: nowISO(), read: { position: 0, pageIndex: 0, pagePosition: 0, completed: false, updatedAt: null }, bookmarks: [], favoriteScenes: [] };
+      cloned.pages = normalizeRoutePages(route).map((page, index) => ({ ...page, id: uid('page'), order: index, createdAt: nowISO(), updatedAt: nowISO() }));
+      cloned.body = routeBody(cloned);
+      return cloned;
+    });
+    series.entries.push(copy);
+    touchSeries(series);
+    await saveEncryptedState(true);
+    render();
+  }
+
+  async function toggleFavoriteEntry(series, entryId) {
+    const entry = series.entries.find((item) => item.id === entryId);
+    if (!entry) return;
+    entry.favorite = !entry.favorite;
+    entry.updatedAt = nowISO();
+    touchSeries(series);
+    await saveEncryptedState(true);
+    render();
+  }
+
+  async function deleteChapter(series, chapterId) {
+    const chapter = series.chapters.find((item) => item.id === chapterId);
+    if (!chapter) return;
+    const ok = await confirmDialog('章を削除しますか？', 'この章に入っている話は「章なし」に移動します。');
+    if (!ok) return;
+    series.entries.forEach((entry) => { if (entry.chapterId === chapterId) entry.chapterId = ''; });
+    series.chapters = series.chapters.filter((item) => item.id !== chapterId);
+    touchSeries(series);
+    await saveEncryptedState(true);
+    render();
+  }
+
+  function addTrash(type, label, item, parent = {}) {
+    const trashItem = { id: uid('trash'), type, label, item, parent, deletedAt: nowISO() };
+    state.trash.unshift(trashItem);
+  }
+
+  async function confirmDeleteSeries(series) {
+    const ok = await confirmDialog('シリーズをゴミ箱へ移動しますか？', 'あとからゴミ箱で復元できます。');
+    if (!ok) return;
+    addTrash('series', series.title, series);
+    state.series = state.series.filter((item) => item.id !== series.id);
+    await saveEncryptedState(true);
+    navigate('series');
+  }
+
+  async function confirmDeleteEntry(series, entryId) {
+    const entry = series.entries.find((item) => item.id === entryId);
+    if (!entry) return;
+    const ok = await confirmDialog('話をゴミ箱へ移動しますか？', 'ルートもまとめて移動します。');
+    if (!ok) return;
+    addTrash('entry', entry.title, entry, { seriesId: series.id });
+    series.entries = series.entries.filter((item) => item.id !== entryId);
+    touchSeries(series);
+    await saveEncryptedState(true);
+    render();
+  }
+
+  async function confirmDeleteRoute(series, entry, route) {
+    if (entry.routes.length <= 1) return toastMessage('最後のルートは削除できません。');
+    const ok = await confirmDialog('このルートをゴミ箱へ移動しますか？', 'あとから復元できます。');
+    if (!ok) return;
+    addTrash('route', `${entry.title} / ${route.title}`, route, { seriesId: series.id, entryId: entry.id });
+    entry.routes = entry.routes.filter((item) => item.id !== route.id);
+    entry.updatedAt = nowISO();
+    touchSeries(series);
+    await saveEncryptedState(true);
+    navigate('editor', { seriesId: series.id, entryId: entry.id, routeId: entry.routes[0].id });
+  }
+
+  async function deleteIdea(idea) {
+    const ok = await confirmDialog('ネタをゴミ箱へ移動しますか？', 'あとから復元できます。');
+    if (!ok) return;
+    addTrash('idea', idea.title, idea);
+    state.ideas = state.ideas.filter((item) => item.id !== idea.id);
+    await saveEncryptedState(true);
+    render();
+  }
+
+  async function restoreTrash(trashId) {
+    const trashItem = state.trash.find((item) => item.id === trashId);
+    if (!trashItem) return;
+    if (trashItem.type === 'series') state.series.unshift(trashItem.item);
+    if (trashItem.type === 'idea') state.ideas.unshift(trashItem.item);
+    if (trashItem.type === 'entry') {
+      const series = getSeries(trashItem.parent.seriesId);
+      if (!series) return toastMessage('復元先シリーズがありません。');
+      series.entries.push(trashItem.item);
+      touchSeries(series);
+    }
+    if (trashItem.type === 'route') {
+      const entry = getEntry(trashItem.parent.seriesId, trashItem.parent.entryId);
+      const series = getSeries(trashItem.parent.seriesId);
+      if (!entry || !series) return toastMessage('復元先の話がありません。');
+      entry.routes.push(trashItem.item);
+      entry.updatedAt = nowISO();
+      touchSeries(series);
+    }
+    state.trash = state.trash.filter((item) => item.id !== trashId);
+    await saveEncryptedState(true);
+    render();
+  }
+
+  async function finalDeleteTrash(trashId) {
+    const ok = await confirmDialog('完全削除しますか？', 'この操作は戻せません。');
+    if (!ok) return;
+    state.trash = state.trash.filter((item) => item.id !== trashId);
+    await saveEncryptedState(true);
+    render();
+  }
+
+  function confirmDialog(title, message) {
+    return new Promise((resolve) => {
+      openModal(title, `<p>${escapeHTML(message)}</p>`, `<button id="cancelConfirm" class="ghost" value="cancel">キャンセル</button><button id="okConfirm" class="danger-button" value="default">OK</button>`);
+      $('#cancelConfirm', modal).onclick = (event) => { event.preventDefault(); closeModal(); resolve(false); };
+      $('#okConfirm', modal).onclick = (event) => { event.preventDefault(); closeModal(); resolve(true); };
+      modal.addEventListener('close', function onClose() { modal.removeEventListener('close', onClose); resolve(false); }, { once: true });
+    });
+  }
+
+  function exportJSON() {
+    const data = JSON.stringify({ exportedAt: nowISO(), state }, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `novel_backup_${todayKey()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toastMessage('バックアップを作成しました。');
+  }
+
+  async function importJSON() {
+    const file = $('#importFile', content).files?.[0];
+    if (!file) return toastMessage('ファイルを選んでください。');
+    const text = await file.text();
+    let parsed;
+    try { parsed = JSON.parse(text); } catch (error) { return toastMessage('JSONファイルを読めませんでした。'); }
+    const nextState = parsed.state || parsed;
+    if (!nextState.series || !nextState.ideas) return toastMessage('バックアップ形式が違います。');
+    const ok = await confirmDialog('復元しますか？', '現在のデータをバックアップ内容に置き換えます。');
+    if (!ok) return;
+    state = nextState;
+    state.updatedAt = nowISO();
+    await saveEncryptedState(true);
+    toastMessage('復元しました。');
+    navigate('home');
+  }
+
+  async function openPasscodeChangeModal() {
+    openModal('パスコード変更', `
+      <div class="form-grid">
+        <label class="full">現在のパスコード<input id="oldPass" type="password" inputmode="numeric"></label>
+        <label>新しいパスコード<input id="newPass" type="password" inputmode="numeric"></label>
+        <label>新しいパスコード確認<input id="newPass2" type="password" inputmode="numeric"></label>
+      </div>
+    `, `<button class="ghost" value="cancel">キャンセル</button><button id="changePassButton" class="primary" value="default">変更</button>`);
+    $('#changePassButton', modal).onclick = async (event) => {
+      event.preventDefault();
+      const oldPass = $('#oldPass', modal).value;
+      const newPass = $('#newPass', modal).value;
+      const newPass2 = $('#newPass2', modal).value;
+      if (newPass.length < 4) return toastMessage('4桁以上にしてください。');
+      if (newPass !== newPass2) return toastMessage('確認が一致しません。');
+      try {
+        await unlock(oldPass);
+        const backupState = state;
+        await setupPasscode(newPass);
+        state = backupState;
+        await saveEncryptedState(true);
+        closeModal();
+        toastMessage('パスコードを変更しました。');
+        render();
+      } catch (error) {
+        toastMessage(error.message || '変更できませんでした。');
+      }
+    };
+  }
+
+  async function confirmResetAll() {
+    const ok = await confirmDialog('全データを初期化しますか？', 'パスコード・小説データ・バックアップ以外の端末内データを削除します。先にバックアップを作成してください。');
+    if (!ok) return;
+    await resetAllData();
+  }
+
+  function bindGlobalEvents() {
+    $('#lockForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const pass = $('#passcodeInput').value;
+      try {
+        if (!hasPasscode()) {
+          const pass2 = $('#passcodeConfirmInput').value;
+          if (pass.length < 4) return toastMessage('4桁以上にしてください。');
+          if (pass !== pass2) return toastMessage('確認が一致しません。');
+          await setupPasscode(pass);
+        } else {
+          await unlock(pass);
+        }
+        showMainApp();
+      } catch (error) {
+        console.error(error);
+        toastMessage(error.message || '開けませんでした。');
+      }
+    });
+
+    $('#resetPasscodeButton').addEventListener('click', async () => {
+      const ok = await confirmDialog('初期化しますか？', 'パスコードを忘れた場合は、端末内データも削除されます。バックアップがある場合だけ復元できます。');
+      if (ok) await resetAllData();
+    });
+
+    $('#lockNowButton').addEventListener('click', () => {
+      state = null;
+      sessionKey = null;
+      clearTimeout(autosaveTimer);
+      showLockScreen();
+    });
+
+    $('#menuButton').addEventListener('click', () => $('#sideNav').classList.toggle('open'));
+    $('#sideNav').addEventListener('click', (event) => {
+      const button = event.target.closest('.nav-item');
+      if (!button) return;
+      navigate(button.dataset.view, { tag: '', query: '' });
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && state?.settings?.lockOnHide) {
+        saveEncryptedState(true).catch(console.error);
+      }
+    });
+
+    if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+      navigator.serviceWorker.register('./sw.js').catch(console.error);
+    }
+  }
+
+  async function init() {
+    try {
+      db = await openDB();
+      bindGlobalEvents();
+      if (isFirebaseConfigured()) ensureFirebase().catch((error) => { console.warn(error); cloudMessage = error.message || 'Firebase初期化に失敗しました。'; });
+      showLockScreen();
+    } catch (error) {
+      app.classList.remove('is-loading');
+      lockScreen.innerHTML = `<div class="lock-card"><h1>起動できませんでした</h1><p>${escapeHTML(error.message)}</p></div>`;
+    }
+  }
+
+  init();
+})();
+
+  </script>
+</body>
+</html>
