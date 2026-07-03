@@ -2296,11 +2296,22 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
   }
 
   function renderSeriesStories(series) {
-    const chapters = [{ id: '', title: '章なし' }, ...series.chapters.sort((a, b) => a.order - b.order)];
-    return chapters.map((chapter) => {
-      const entries = series.entries
+    const sortedChapters = (series.chapters || []).slice().sort((a, b) => a.order - b.order);
+    const noChapterEntries = series.entries
+      .filter((entry) => !(entry.chapterId || ''))
+      .sort(compareEntries);
+    const chapters = [];
+    if (!sortedChapters.length || noChapterEntries.length) {
+      chapters.push({ id: '', title: '章なし', entries: noChapterEntries });
+    }
+    chapters.push(...sortedChapters.map((chapter) => ({
+      ...chapter,
+      entries: series.entries
         .filter((entry) => (entry.chapterId || '') === chapter.id)
-        .sort(compareEntries);
+        .sort(compareEntries)
+    })));
+    return chapters.map((chapter) => {
+      const entries = chapter.entries || [];
       return `
         <div class="card span-12" style="margin-bottom:14px">
           <div class="item-head">
