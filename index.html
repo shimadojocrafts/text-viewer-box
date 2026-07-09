@@ -1090,6 +1090,7 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
           <button data-view="ideas" class="nav-item" type="button">ネタ帳</button>
           <button data-view="tags" class="nav-item" type="button">タグ</button>
           <button data-view="search" class="nav-item" type="button">検索</button>
+          <button data-view="import" class="nav-item" type="button">取り込み</button>
           <button data-view="hidden" class="nav-item" type="button">非表示</button>
           <button data-view="trash" class="nav-item" type="button">ゴミ箱</button>
           <button data-view="backup" class="nav-item" type="button">バックアップ</button>
@@ -1939,6 +1940,7 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
     if (view === 'ideas') return renderIdeas();
     if (view === 'tags') return renderTagView();
     if (view === 'search') return renderSearch();
+    if (view === 'import') return renderImport();
     if (view === 'trash') return renderTrash();
     if (view === 'backup') return renderBackup();
     if (view === 'settings') return renderSettings();
@@ -3000,6 +3002,239 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
     if (result.type === 'entry') return `<div class="item"><p class="item-title">話：${escapeHTML(result.entry.title)}</p><p class="item-sub">${escapeHTML(result.series.title)}</p><button class="ghost small" data-action="open-series" data-series="${result.series.id}">開く</button></div>`;
     if (result.type === 'route') return renderMiniRoute(result.series.id, result.entry.id, result.route.id);
     return `<div class="item"><p class="item-title">ネタ：${escapeHTML(result.idea.title)}</p><button class="ghost small" data-action="edit-idea" data-idea="${result.idea.id}">開く</button></div>`;
+  }
+
+
+  function normalizeMetaKey(key = '') {
+    return String(key).trim().replace(/[\s　]/g, '').toLowerCase();
+  }
+
+  function routeTypeFromText(value = '') {
+    const text = String(value).trim().toLowerCase();
+    if (!text) return 'main';
+    if (text.includes('本編') || text === 'main') return 'main';
+    if (text.includes('採用')) return 'candidate';
+    if (text.includes('書き直') || text.includes('rewrite')) return 'rewrite';
+    if (text.includes('没') || text.includes('rejected')) return 'rejected';
+    return 'if';
+  }
+
+  function statusFromText(value = '') {
+    const text = String(value).trim();
+    if (text.includes('完成')) return 'complete';
+    if (text.includes('保留')) return 'hold';
+    if (text.includes('没')) return 'rejected';
+    if (text.includes('執筆')) return 'writing';
+    return 'draft';
+  }
+
+  function parseImportText(raw = '') {
+    const cleaned = String(raw || '')
+      .replace(/\r\n/g, '\n')
+      .replace(/^```(?:text|json|novel|txt)?\s*/i, '')
+      .replace(/```\s*$/i, '')
+      .replace(/===\s*END\s*===/gi, '')
+      .trim();
+    if (!cleaned) throw new Error('取り込みテキストが空です。');
+
+    const lines = cleaned.split('\n');
+    const meta = {};
+    const bodyLines = [];
+    let inBody = false;
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (/^===\s*NOVEL_IMPORT\s*===$/i.test(trimmed)) continue;
+      const pageMarker = /^---\s*(?:\d+\s*)?ページ(?:目)?(?:\s*[:：].*)?\s*---$/.test(trimmed);
+      const metaMatch = trimmed.match(/^([^:：]{1,20})\s*[:：]\s*(.*)$/);
+      if (!inBody && pageMarker) inBody = true;
+      if (!inBody && metaMatch) {
+        const key = normalizeMetaKey(metaMatch[1]);
+        meta[key] = metaMatch[2].trim();
+      } else {
+        bodyLines.push(line);
+      }
+    }
+
+    let bodyText = bodyLines.join('\n').trim();
+    if (!bodyText) {
+      const firstBlank = cleaned.indexOf('\n\n');
+      bodyText = firstBlank >= 0 ? cleaned.slice(firstBlank).trim() : cleaned;
+    }
+
+    const pageRegex = /^---\s*(?:(\d+)\s*)?ページ(?:目)?(?:\s*[:：]\s*(.*?))?\s*---$/gm;
+    const markers = [];
+    let match;
+    while ((match = pageRegex.exec(bodyText)) !== null) {
+      markers.push({ index: match.index, end: pageRegex.lastIndex, num: match[1], title: match[2] || '' });
+    }
+
+    let pages = [];
+    if (markers.length) {
+      markers.forEach((m, index) => {
+        const next = markers[index + 1];
+        const body = bodyText.slice(m.end, next ? next.index : bodyText.length).trim();
+        pages.push({
+          title: m.title.trim() || `${index + 1}ページ`,
+          body
+        });
+      });
+    } else {
+      pages = [{ title: '1ページ', body: bodyText }];
+    }
+    pages = pages.filter((page) => page.body || page.title);
+    if (!pages.length) pages = [{ title: '1ページ', body: '' }];
+
+    const seriesTitle = meta['シリーズ'] || meta['series'] || '';
+    const chapterTitle = meta['章'] || meta['chapter'] || '';
+    const episode = meta['話数'] || meta['episode'] || '';
+    const title = meta['タイトル'] || meta['題名'] || meta['title'] || (episode ? `第${episode}話` : '取り込み作品');
+    const routeTitle = meta['ルート'] || meta['route'] || meta['ルート名'] || meta['種別'] || '本編';
+    const type = routeTypeFromText(meta['種別'] || meta['ルート種別'] || routeTitle);
+    const tags = parseTags(meta['タグ'] || meta['tags'] || '');
+    const status = statusFromText(meta['状態'] || meta['status'] || '');
+    const memo = meta['メモ'] || meta['memo'] || '';
+
+    return {
+      seriesTitle: seriesTitle.trim(),
+      chapterTitle: chapterTitle.trim(),
+      entryTitle: title.trim(),
+      routeTitle: routeTitle.trim() || routeTypeLabels[type] || '本編',
+      routeType: type,
+      status,
+      tags,
+      memo,
+      pages
+    };
+  }
+
+  function importPreviewHTML(parsed) {
+    const charCount = parsed.pages.reduce((sum, page) => sum + charCountText(page.body), 0);
+    return `
+      <div class="card soft-card import-preview-card">
+        <h3>取り込みプレビュー</h3>
+        <p><strong>シリーズ：</strong>${escapeHTML(parsed.seriesTitle || '未指定')}</p>
+        <p><strong>章：</strong>${escapeHTML(parsed.chapterTitle || '章なし')}</p>
+        <p><strong>話：</strong>${escapeHTML(parsed.entryTitle)}</p>
+        <p><strong>ルート：</strong>${escapeHTML(parsed.routeTitle)} / ${escapeHTML(routeTypeLabels[parsed.routeType] || parsed.routeType)}</p>
+        <p><strong>ページ：</strong>${parsed.pages.length}ページ / ${charCount.toLocaleString()}字</p>
+        ${parsed.tags.length ? renderTags(parsed.tags, true) : ''}
+      </div>
+    `;
+  }
+
+  function findOrCreateSeriesByTitle(title = '') {
+    const safeTitle = title.trim() || '取り込みシリーズ';
+    let series = state.series.find((item) => item.title === safeTitle);
+    if (!series) {
+      series = makeSeries(safeTitle);
+      state.series.unshift(series);
+    }
+    return series;
+  }
+
+  function findOrCreateChapterByTitle(series, title = '') {
+    const safeTitle = title.trim();
+    if (!safeTitle || safeTitle === '章なし') return '';
+    let chapter = (series.chapters || []).find((item) => item.title === safeTitle);
+    if (!chapter) {
+      chapter = makeChapter(safeTitle);
+      chapter.order = series.chapters.length;
+      series.chapters.push(chapter);
+    }
+    return chapter.id;
+  }
+
+  async function importNovelFromText(raw, options = {}) {
+    const parsed = parseImportText(raw);
+    let series = parsed.seriesTitle ? findOrCreateSeriesByTitle(parsed.seriesTitle) : getSeries(options.seriesId || '') || state.series[0];
+    if (!series) series = findOrCreateSeriesByTitle('取り込みシリーズ');
+    const chapterId = findOrCreateChapterByTitle(series, parsed.chapterTitle);
+    const shouldMerge = options.mergeSameTitle !== false;
+    let entry = shouldMerge ? series.entries.find((item) => item.title === parsed.entryTitle && (item.chapterId || '') === chapterId) : null;
+    if (!entry) {
+      entry = makeEntry(parsed.entryTitle, chapterId);
+      entry.tags = [...parsed.tags];
+      entry.memo = parsed.memo;
+      entry.status = parsed.status;
+      entry.routes = [];
+      series.entries.push(entry);
+    } else {
+      entry.tags = Array.from(new Set([...(entry.tags || []), ...parsed.tags]));
+      if (parsed.memo && !entry.memo) entry.memo = parsed.memo;
+      entry.updatedAt = nowISO();
+    }
+    const route = makeRoute(parsed.routeTitle, parsed.routeType, '');
+    route.status = parsed.status;
+    route.tags = [...parsed.tags];
+    route.memo = parsed.memo;
+    route.pages = parsed.pages.map((page, index) => makePage(page.title || `${index + 1}ページ`, page.body || '', index));
+    route.body = route.pages.map((page) => page.body || '').join('\n\n');
+    entry.routes.push(route);
+    entry.updatedAt = nowISO();
+    touchSeries(series);
+    await saveEncryptedState(true);
+    return { parsed, series, entry, route };
+  }
+
+  function renderImport() {
+    setTitle('取り込み');
+    const seriesOptions = ['<option value="">取り込みテキストのシリーズ名を使う</option>', ...state.series.map((series) => `<option value="${series.id}">${escapeHTML(series.title)}</option>`)].join('');
+    content.innerHTML = `
+      <div class="view-head">
+        <div>
+          <h2>取り込み</h2>
+          <p class="muted">ChatGPTなどで作った保存用テキストを貼ると、シリーズ・章・話・ページ・ルートをまとめて登録できます。</p>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="card span-12">
+          <h3>一括取り込み</h3>
+          <div class="form-grid">
+            <label>追加先シリーズ<select id="importSeries">${seriesOptions}</select></label>
+            <label class="check-row"><input id="importMerge" type="checkbox" checked> 同じ話タイトルがあれば同じ話にルート追加</label>
+            <label class="full">取り込みテキスト<textarea id="importText" rows="14" placeholder="=== NOVEL_IMPORT ===&#10;シリーズ: シリーズA&#10;章: 章A&#10;話数: 1&#10;タイトル: 第1話 タイトルA&#10;ルート: 本編&#10;種別: 本編&#10;タグ: #タグA #タグB&#10;&#10;--- 1ページ ---&#10;本文...&#10;&#10;--- 2ページ ---&#10;本文...&#10;=== END ==="></textarea></label>
+          </div>
+          <div class="toolbar">
+            <button class="ghost" data-action="import-preview">プレビュー</button>
+            <button class="primary" data-action="import-run">取り込み実行</button>
+          </div>
+          <div id="importPreview"></div>
+        </div>
+        <div class="card span-12">
+          <h3>ChatGPTに頼む時の言い方</h3>
+          <p class="muted">小説を書いてもらったあとに、こう言えばOKです。</p>
+          <div class="empty" style="text-align:left; align-items:flex-start;">
+            <code>保管庫取り込み形式もつけて</code>
+          </div>
+          <p class="micro muted">実際のシリーズ名・タグ名・内容は自分で指定できます。指定しない場合は、取り込み時に仮のシリーズへ入ります。</p>
+        </div>
+      </div>
+    `;
+    content.onclick = async (event) => {
+      const target = event.target.closest('button');
+      if (!target) return;
+      const raw = $('#importText', content).value;
+      if (target.dataset.action === 'import-preview') {
+        try {
+          const parsed = parseImportText(raw);
+          $('#importPreview', content).innerHTML = importPreviewHTML(parsed);
+        } catch (error) {
+          toastMessage(error.message || '読み取れませんでした。');
+        }
+      }
+      if (target.dataset.action === 'import-run') {
+        try {
+          const result = await importNovelFromText(raw, {
+            seriesId: $('#importSeries', content).value,
+            mergeSameTitle: $('#importMerge', content).checked
+          });
+          toastMessage('取り込みました。');
+          navigate('editor', { seriesId: result.series.id, entryId: result.entry.id, routeId: result.route.id });
+        } catch (error) {
+          toastMessage(error.message || '取り込みできませんでした。');
+        }
+      }
+    };
   }
 
   function renderTrash() {
