@@ -1052,6 +1052,12 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
   }
 }
 
+
+
+/* Smart import */
+.import-steps{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}.import-step{border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:12px;background:var(--panel)}.import-step.active{background:#111;color:#fff;border-color:#111}.import-result-list{display:grid;gap:14px}.import-story-card{border:1px solid var(--line);border-radius:18px;padding:14px;background:var(--panel)}.import-story-card.duplicate{border-color:#9a6b00;box-shadow:0 0 0 2px rgba(154,107,0,.08)}.import-story-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.import-page-box{border:1px solid var(--line);border-radius:14px;padding:10px;margin-top:10px;background:var(--soft)}.import-page-box textarea{min-height:150px}.import-meta-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}.keyword-rule-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(160px,.45fr) auto;gap:8px;align-items:end}.import-warning{border:1px solid #9a6b00;background:#fff8e6;border-radius:12px;padding:10px 12px;font-size:13px}.import-draft-note{font-size:12px;color:var(--muted)}
+@media(max-width:760px){.import-meta-grid{grid-template-columns:1fr 1fr}.keyword-rule-grid{grid-template-columns:1fr}.import-story-head{display:block}}
+
 </style>
 </head>
 <body>
@@ -3028,107 +3034,160 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
     return 'draft';
   }
 
-  function parseImportText(raw = '') {
-    const cleaned = String(raw || '')
-      .replace(/\r\n/g, '\n')
-      .replace(/^```(?:text|json|novel|txt)?\s*/i, '')
-      .replace(/```\s*$/i, '')
-      .replace(/===\s*END\s*===/gi, '')
-      .trim();
-    if (!cleaned) throw new Error('取り込みテキストが空です。');
+  function ensureImportSettings() {
+    state.settings = state.settings || {};
+    if (!Array.isArray(state.settings.keywordRules)) state.settings.keywordRules = [];
+    if (!Array.isArray(state.settings.importHistory)) state.settings.importHistory = [];
+    if (!state.settings.importDraft) state.settings.importDraft = { raw: '', parsed: [], options: {} };
+  }
 
-    const lines = cleaned.split('\n');
-    const meta = {};
-    const bodyLines = [];
-    let inBody = false;
+  function keywordRulesFromText(text = '') {
+    return String(text).split('\n').map((line) => line.trim()).filter(Boolean).map((line) => {
+      const parts = line.split(/=>|→|＝|=/);
+      if (parts.length < 2) return null;
+      const keywords = parts[0].split(/[,、\/]/).map((v) => v.trim()).filter(Boolean);
+      const tag = parts.slice(1).join('=').trim().replace(/^#/, '');
+      return keywords.length && tag ? { id: uid('rule'), keywords, tag } : null;
+    }).filter(Boolean);
+  }
+
+  function keywordRulesToText(rules = []) {
+    return rules.map((rule) => `${(rule.keywords || []).join(', ')} => #${String(rule.tag || '').replace(/^#/, '')}`).join('\n');
+  }
+
+  function keywordTagCandidates(text = '') {
+    ensureImportSettings();
+    const source = String(text).toLowerCase();
+    return state.settings.keywordRules.filter((rule) => (rule.keywords || []).some((keyword) => source.includes(String(keyword).toLowerCase()))).map((rule) => String(rule.tag || '').replace(/^#/, '')).filter(Boolean);
+  }
+
+  function cleanImportText(raw = '') {
+    return String(raw || '').replace(/\r\n/g, '\n').replace(/^```(?:text|json|novel|txt|markdown|md)?\s*/i, '').replace(/```\s*$/i, '').trim();
+  }
+
+  function looksLikeExplicitHeading(line = '') {
+    const t = line.trim();
+    return /^(?:第\s*)?\d+(?:\.\d+)?\s*(?:話|回|章)\b/.test(t) || /^(?:episode|ep)\s*\d+/i.test(t) || /^(?:番外編|外伝|短編|プロローグ|エピローグ|序章|終章)(?:\s|　|[:：]|$)/.test(t);
+  }
+
+  function extractEpisodeNumber(title = '') {
+    const m = String(title).match(/(?:第\s*)?(\d+(?:\.\d+)?)\s*(?:話|回|章)/);
+    return m ? m[1] : '';
+  }
+
+  function looksLikeTitleLine(lines, index, currentLength = 0) {
+    const t = (lines[index] || '').trim();
+    if (!t || t.length > 70 || /[。！？!?]$/.test(t) || /^[「『（(]/.test(t)) return false;
+    const prev1 = index > 0 ? lines[index - 1].trim() : '';
+    const prev2 = index > 1 ? lines[index - 2].trim() : '';
+    const next1 = index + 1 < lines.length ? lines[index + 1].trim() : '';
+    const next2 = index + 2 < lines.length ? lines[index + 2].trim() : '';
+    const separatedBefore = index === 0 || (!prev1 && (!prev2 || /^[-=＊*◆◇■□━─]{3,}$/.test(prev2)));
+    const separatedAfter = !next1 && Boolean(next2);
+    return separatedBefore && separatedAfter && (index === 0 || currentLength > 180);
+  }
+
+  function splitPlainStories(raw = '') {
+    const text = cleanImportText(raw);
+    if (!text) throw new Error('取り込みテキストが空です。');
+    const lines = text.split('\n');
+    const starts = [];
+    let accumulated = 0;
+    lines.forEach((line, index) => {
+      if (looksLikeExplicitHeading(line) || looksLikeTitleLine(lines, index, accumulated)) starts.push(index);
+      accumulated += line.length + 1;
+    });
+    if (!starts.length || starts[0] !== 0) starts.unshift(0);
+    const unique = [...new Set(starts)].sort((a,b)=>a-b);
+    const chunks = unique.map((start, i) => lines.slice(start, unique[i + 1] ?? lines.length).join('\n').trim()).filter(Boolean);
+    return chunks.length ? chunks : [text];
+  }
+
+  function splitPagesAutomatically(body = '', mode = 'auto') {
+    const text = String(body || '').trim();
+    if (!text) return [{ title: '1ページ', body: '' }];
+    if (mode === 'one') return [{ title: '1ページ', body: text }];
+    const explicit = text.split(/^\s*(?:---\s*(?:\d+\s*)?ページ(?:目)?\s*---|\[PAGE\]|---PAGE---)\s*$/gmi).map((v)=>v.trim()).filter(Boolean);
+    if (explicit.length > 1) return explicit.map((body, i)=>({title:`${i+1}ページ`, body}));
+    const blocks = text.split(/\n{2,}/);
+    const pages = [];
+    let current = [];
+    let count = 0;
+    const transition = /^(?:翌朝|翌日|その後|数時間後|しばらくして|一方|その頃|場面は|同じ頃|夜になり|朝になり|次の日|数日後|数週間後|数か月後)/;
+    const separator = /^\s*[-=＊*◆◇■□━─]{3,}\s*$/;
+    function flush(){ const body=current.join('\n\n').trim(); if(body) pages.push(body); current=[]; count=0; }
+    for (const block of blocks) {
+      const b = block.trim();
+      if (!b) continue;
+      if (separator.test(b)) { flush(); continue; }
+      if (current.length && count >= 500 && transition.test(b)) flush();
+      current.push(b); count += b.length;
+      if (count >= 2600) flush();
+    }
+    flush();
+    if (!pages.length) pages.push(text);
+    return pages.map((body, i)=>({title:`${i+1}ページ`, body}));
+  }
+
+  function parseNovelImportBlock(cleaned = '') {
+    const lines = cleaned.replace(/===\s*END\s*===/gi, '').split('\n');
+    const meta = {}; const bodyLines=[]; let inBody=false;
     for (const line of lines) {
-      const trimmed = line.trim();
+      const trimmed=line.trim();
       if (/^===\s*NOVEL_IMPORT\s*===$/i.test(trimmed)) continue;
-      const pageMarker = /^---\s*(?:\d+\s*)?ページ(?:目)?(?:\s*[:：].*)?\s*---$/.test(trimmed);
-      const metaMatch = trimmed.match(/^([^:：]{1,20})\s*[:：]\s*(.*)$/);
-      if (!inBody && pageMarker) inBody = true;
-      if (!inBody && metaMatch) {
-        const key = normalizeMetaKey(metaMatch[1]);
-        meta[key] = metaMatch[2].trim();
-      } else {
-        bodyLines.push(line);
-      }
+      const pageMarker=/^---\s*(?:\d+\s*)?ページ(?:目)?(?:\s*[:：].*)?\s*---$/.test(trimmed);
+      const mm=trimmed.match(/^([^:：]{1,20})\s*[:：]\s*(.*)$/);
+      if (!inBody && pageMarker) inBody=true;
+      if (!inBody && mm) meta[normalizeMetaKey(mm[1])]=mm[2].trim(); else bodyLines.push(line);
     }
-
-    let bodyText = bodyLines.join('\n').trim();
-    if (!bodyText) {
-      const firstBlank = cleaned.indexOf('\n\n');
-      bodyText = firstBlank >= 0 ? cleaned.slice(firstBlank).trim() : cleaned;
-    }
-
-    const pageRegex = /^---\s*(?:(\d+)\s*)?ページ(?:目)?(?:\s*[:：]\s*(.*?))?\s*---$/gm;
-    const markers = [];
-    let match;
-    while ((match = pageRegex.exec(bodyText)) !== null) {
-      markers.push({ index: match.index, end: pageRegex.lastIndex, num: match[1], title: match[2] || '' });
-    }
-
-    let pages = [];
-    if (markers.length) {
-      markers.forEach((m, index) => {
-        const next = markers[index + 1];
-        const body = bodyText.slice(m.end, next ? next.index : bodyText.length).trim();
-        pages.push({
-          title: m.title.trim() || `${index + 1}ページ`,
-          body
-        });
-      });
-    } else {
-      pages = [{ title: '1ページ', body: bodyText }];
-    }
-    pages = pages.filter((page) => page.body || page.title);
-    if (!pages.length) pages = [{ title: '1ページ', body: '' }];
-
-    const seriesTitle = meta['シリーズ'] || meta['series'] || '';
-    const chapterTitle = meta['章'] || meta['chapter'] || '';
-    const episode = meta['話数'] || meta['episode'] || '';
-    const title = meta['タイトル'] || meta['題名'] || meta['title'] || (episode ? `第${episode}話` : '取り込み作品');
-    const routeTitle = meta['ルート'] || meta['route'] || meta['ルート名'] || meta['種別'] || '本編';
-    const type = routeTypeFromText(meta['種別'] || meta['ルート種別'] || routeTitle);
-    const tags = parseTags(meta['タグ'] || meta['tags'] || '');
-    const status = statusFromText(meta['状態'] || meta['status'] || '');
-    const memo = meta['メモ'] || meta['memo'] || '';
-
+    const bodyText=bodyLines.join('\n').trim();
     return {
-      seriesTitle: seriesTitle.trim(),
-      chapterTitle: chapterTitle.trim(),
-      entryTitle: title.trim(),
-      routeTitle: routeTitle.trim() || routeTypeLabels[type] || '本編',
-      routeType: type,
-      status,
-      tags,
-      memo,
-      pages
+      seriesTitle:(meta['シリーズ']||meta['series']||'').trim(), chapterTitle:(meta['章']||meta['chapter']||'').trim(),
+      episode:String(meta['話数']||meta['episode']||'').trim(),
+      entryTitle:(meta['タイトル']||meta['題名']||meta['title']||'取り込み作品').trim(),
+      routeTitle:(meta['ルート']||meta['route']||meta['ルート名']||meta['種別']||'本編').trim(),
+      routeType:routeTypeFromText(meta['種別']||meta['ルート種別']||meta['ルート']||'本編'), status:statusFromText(meta['状態']||''),
+      tags:parseTags(meta['タグ']||''), memo:meta['メモ']||'', pages:splitPagesAutomatically(bodyText,'auto')
     };
   }
 
-  function importPreviewHTML(parsed) {
-    const charCount = parsed.pages.reduce((sum, page) => sum + charCountText(page.body), 0);
-    return `
-      <div class="card soft-card import-preview-card">
-        <h3>取り込みプレビュー</h3>
-        <p><strong>シリーズ：</strong>${escapeHTML(parsed.seriesTitle || '未指定')}</p>
-        <p><strong>章：</strong>${escapeHTML(parsed.chapterTitle || '章なし')}</p>
-        <p><strong>話：</strong>${escapeHTML(parsed.entryTitle)}</p>
-        <p><strong>ルート：</strong>${escapeHTML(parsed.routeTitle)} / ${escapeHTML(routeTypeLabels[parsed.routeType] || parsed.routeType)}</p>
-        <p><strong>ページ：</strong>${parsed.pages.length}ページ / ${charCount.toLocaleString()}字</p>
-        ${parsed.tags.length ? renderTags(parsed.tags, true) : ''}
-      </div>
-    `;
+  function parsePlainChunk(chunk, index, pageMode = 'auto') {
+    const lines=String(chunk).split('\n');
+    let first=lines.findIndex((line)=>line.trim());
+    if(first<0) first=0;
+    let title=lines[first]?.trim()||`取り込み作品${index+1}`;
+    let bodyLines=lines.slice(first+1);
+    if (!looksLikeExplicitHeading(title) && (title.length>70 || /[。！？!?]$/.test(title))) {
+      title=`取り込み作品${index+1}`; bodyLines=lines.slice(first);
+    }
+    while(bodyLines.length && !bodyLines[0].trim()) bodyLines.shift();
+    const body=bodyLines.join('\n').trim();
+    const episode=extractEpisodeNumber(title);
+    return { seriesTitle:'', chapterTitle:'', episode, entryTitle:title, routeTitle:'本編', routeType:'main', status:'draft', tags:[], memo:'', pages:splitPagesAutomatically(body,pageMode) };
+  }
+
+  function parseImportText(raw = '', options = {}) {
+    const cleaned=cleanImportText(raw);
+    if(!cleaned) throw new Error('取り込みテキストが空です。');
+    let stories;
+    if (/===\s*NOVEL_IMPORT\s*===/i.test(cleaned)) {
+      const blocks=cleaned.split(/(?====\s*NOVEL_IMPORT\s*===)/i).map(v=>v.trim()).filter(Boolean);
+      stories=blocks.map(parseNovelImportBlock);
+    } else {
+      stories=splitPlainStories(cleaned).map((chunk,i)=>parsePlainChunk(chunk,i,options.pageMode||'auto'));
+    }
+    stories.forEach((story,i)=>{
+      const full=story.pages.map(p=>p.body).join('\n');
+      story.id=uid('import'); story.selected=true; story.order=i;
+      story.tags=Array.from(new Set([...(story.tags||[]), ...keywordTagCandidates(full)]));
+    });
+    return stories;
   }
 
   function findOrCreateSeriesByTitle(title = '') {
     const safeTitle = title.trim() || '取り込みシリーズ';
     let series = state.series.find((item) => item.title === safeTitle);
-    if (!series) {
-      series = makeSeries(safeTitle);
-      state.series.unshift(series);
-    }
+    if (!series) { series = makeSeries(safeTitle); state.series.unshift(series); }
     return series;
   }
 
@@ -3136,104 +3195,139 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
     const safeTitle = title.trim();
     if (!safeTitle || safeTitle === '章なし') return '';
     let chapter = (series.chapters || []).find((item) => item.title === safeTitle);
-    if (!chapter) {
-      chapter = makeChapter(safeTitle);
-      chapter.order = series.chapters.length;
-      series.chapters.push(chapter);
-    }
+    if (!chapter) { chapter = makeChapter(safeTitle); chapter.order = series.chapters.length; series.chapters.push(chapter); }
     return chapter.id;
   }
 
-  async function importNovelFromText(raw, options = {}) {
-    const parsed = parseImportText(raw);
-    let series = parsed.seriesTitle ? findOrCreateSeriesByTitle(parsed.seriesTitle) : getSeries(options.seriesId || '') || state.series[0];
-    if (!series) series = findOrCreateSeriesByTitle('取り込みシリーズ');
-    const chapterId = findOrCreateChapterByTitle(series, parsed.chapterTitle);
-    const shouldMerge = options.mergeSameTitle !== false;
-    let entry = shouldMerge ? series.entries.find((item) => item.title === parsed.entryTitle && (item.chapterId || '') === chapterId) : null;
-    if (!entry) {
-      entry = makeEntry(parsed.entryTitle, chapterId);
-      entry.tags = [...parsed.tags];
-      entry.memo = parsed.memo;
-      entry.status = parsed.status;
-      entry.routes = [];
-      series.entries.push(entry);
-    } else {
-      entry.tags = Array.from(new Set([...(entry.tags || []), ...parsed.tags]));
-      if (parsed.memo && !entry.memo) entry.memo = parsed.memo;
-      entry.updatedAt = nowISO();
+  function duplicateForImport(series, story, chapterId='') {
+    const normalized=(s)=>String(s||'').replace(/\s+/g,'').toLowerCase();
+    const body=normalized(story.pages.map(p=>p.body).join(''));
+    return series.entries.find((entry)=>{
+      if((entry.chapterId||'')!==chapterId) return false;
+      if(normalized(entry.title)===normalized(story.entryTitle)) return true;
+      return entry.routes.some((route)=>body && normalized(routeBody(route))===body);
+    }) || null;
+  }
+
+  function applyNumbering(stories, mode, startNumber) {
+    let n=Number(startNumber)||1;
+    stories.forEach((story)=>{
+      if(!story.selected) return;
+      if(mode==='renumber') { story.episode=String(n); story.entryTitle=`第${n}話 ${story.entryTitle.replace(/^(?:第\s*)?\d+(?:\.\d+)?\s*(?:話|回)\s*/,'')}`.trim(); n++; }
+      if(mode==='none') { story.episode=''; story.entryTitle=story.entryTitle.replace(/^(?:第\s*)?\d+(?:\.\d+)?\s*(?:話|回)\s*/,'').trim()||'無題'; }
+    });
+  }
+
+  function importPreviewHTML(stories, seriesId='') {
+    const series=getSeries(seriesId)||null;
+    return `<div class="import-result-list">${stories.map((story,index)=>{
+      const ch=story.pages.reduce((s,p)=>s+charCountText(p.body),0);
+      const chapterId=series?findOrCreateChapterByTitlePreview(series,story.chapterTitle):'';
+      const dup=series?duplicateForImport(series,story,chapterId):null;
+      return `<div class="import-story-card ${dup?'duplicate':''}" data-import-story="${story.id}">
+        <div class="import-story-head"><label class="check-row"><input type="checkbox" data-import-field="selected" data-index="${index}" ${story.selected?'checked':''}> 取り込む</label><div class="toolbar"><button class="ghost small" data-action="import-merge-prev" data-index="${index}" ${index===0?'disabled':''}>前の話と結合</button><button class="ghost small" data-action="import-remove" data-index="${index}">除外</button></div></div>
+        ${dup?`<div class="import-warning">似た話が既にあります：${escapeHTML(dup.title)}</div>`:''}
+        <div class="import-meta-grid">
+          <label>タイトル<input data-import-field="entryTitle" data-index="${index}" value="${escapeHTML(story.entryTitle)}"></label>
+          <label>話数<input data-import-field="episode" data-index="${index}" value="${escapeHTML(story.episode||'')}" placeholder="空欄可"></label>
+          <label>ルート<select data-import-field="routeType" data-index="${index}">${Object.entries(routeTypeLabels).map(([v,l])=>`<option value="${v}" ${story.routeType===v?'selected':''}>${escapeHTML(l)}</option>`).join('')}</select></label>
+          <label>ルート名<input data-import-field="routeTitle" data-index="${index}" value="${escapeHTML(story.routeTitle||'本編')}"></label>
+        </div>
+        <label>タグ<input data-import-field="tags" data-index="${index}" value="${escapeHTML(tagsToInput(story.tags||[]))}"></label>
+        <p class="micro muted">${story.pages.length}ページ / ${ch.toLocaleString()}字</p>
+        <div>${story.pages.map((page,pIndex)=>`<div class="import-page-box"><div class="toolbar"><strong>${pIndex+1}ページ</strong><button class="ghost small" data-action="import-delete-page" data-index="${index}" data-page="${pIndex}" ${story.pages.length===1?'disabled':''}>ページ削除</button></div><textarea data-import-page data-index="${index}" data-page="${pIndex}" rows="8">${escapeHTML(page.body)}</textarea></div>`).join('')}</div>
+        <div class="toolbar"><button class="ghost small" data-action="import-add-page" data-index="${index}">ページ追加</button><button class="ghost small" data-action="import-split-cursor" data-index="${index}">カーソル位置で別の話に分割</button></div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  function findOrCreateChapterByTitlePreview(series,title='') { const found=(series.chapters||[]).find(c=>c.title===title.trim()); return found?.id||''; }
+
+  async function importParsedStories(stories, options={}) {
+    const selected=stories.filter(s=>s.selected);
+    if(!selected.length) throw new Error('取り込む話が選ばれていません。');
+    localStorage.setItem('novel_archive_pre_import_backup', JSON.stringify({exportedAt:nowISO(),state}));
+    const series=getSeries(options.seriesId||'') || findOrCreateSeriesByTitle(options.seriesTitle||selected[0].seriesTitle||'取り込みシリーズ');
+    const defaultChapterId=findOrCreateChapterByTitle(series,options.chapterTitle||'');
+    let imported=0;
+    for(const story of selected){
+      const chapterId=story.chapterTitle?findOrCreateChapterByTitle(series,story.chapterTitle):defaultChapterId;
+      const dup=duplicateForImport(series,story,chapterId);
+      let entry=null;
+      if(dup && options.duplicateMode==='skip') continue;
+      if(dup && options.duplicateMode==='route') entry=dup;
+      if(!entry){ entry=makeEntry(story.entryTitle,chapterId); entry.routes=[]; entry.order=series.entries.length; series.entries.push(entry); }
+      entry.title=story.entryTitle; entry.tags=Array.from(new Set([...(entry.tags||[]),...(story.tags||[])])); entry.status=story.status||'draft';
+      const route=makeRoute(story.routeTitle||routeTypeLabels[story.routeType]||'本編',story.routeType||'main','');
+      route.status=story.status||'draft'; route.tags=[...(story.tags||[])]; route.memo=story.memo||'';
+      route.pages=story.pages.map((p,i)=>makePage(`${i+1}ページ`,p.body||'',i)); route.body=route.pages.map(p=>p.body||'').join('\n\n');
+      entry.routes.push(route); entry.updatedAt=nowISO(); imported++;
     }
-    const route = makeRoute(parsed.routeTitle, parsed.routeType, '');
-    route.status = parsed.status;
-    route.tags = [...parsed.tags];
-    route.memo = parsed.memo;
-    route.pages = parsed.pages.map((page, index) => makePage(page.title || `${index + 1}ページ`, page.body || '', index));
-    route.body = route.pages.map((page) => page.body || '').join('\n\n');
-    entry.routes.push(route);
-    entry.updatedAt = nowISO();
     touchSeries(series);
+    ensureImportSettings();
+    state.settings.importHistory.unshift({id:uid('history'),at:nowISO(),seriesId:series.id,seriesTitle:series.title,count:imported,titles:selected.slice(0,50).map(s=>s.entryTitle)});
+    state.settings.importHistory=state.settings.importHistory.slice(0,30);
+    state.settings.importDraft={raw:'',parsed:[],options:{}};
     await saveEncryptedState(true);
-    return { parsed, series, entry, route };
+    return {series,imported};
   }
 
   function renderImport() {
+    ensureImportSettings();
     setTitle('取り込み');
-    const seriesOptions = ['<option value="">取り込みテキストのシリーズ名を使う</option>', ...state.series.map((series) => `<option value="${series.id}">${escapeHTML(series.title)}</option>`)].join('');
-    content.innerHTML = `
-      <div class="view-head">
-        <div>
-          <h2>取り込み</h2>
-          <p class="muted">ChatGPTなどで作った保存用テキストを貼ると、シリーズ・章・話・ページ・ルートをまとめて登録できます。</p>
-        </div>
-      </div>
+    const draft=state.settings.importDraft||{raw:'',parsed:[],options:{}};
+    const opts=draft.options||{};
+    const seriesOptions=['<option value="">新しいシリーズを作る／本文の指定を使う</option>',...state.series.map(s=>`<option value="${s.id}" ${opts.seriesId===s.id?'selected':''}>${escapeHTML(s.title)}</option>`)].join('');
+    const chapters=opts.seriesId?((getSeries(opts.seriesId)?.chapters)||[]):[];
+    content.innerHTML=`
+      <div class="view-head"><div><h2>取り込み</h2><p class="muted">普通の小説本文をそのまま貼れます。複数話、タイトル、話数、ページ区切り、タグ候補を自動判定します。</p></div></div>
+      <div class="import-steps"><span class="import-step active">1 貼り付け</span><span class="import-step ${draft.parsed?.length?'active':''}">2 解析・修正</span><span class="import-step">3 取り込み</span></div>
       <div class="grid">
-        <div class="card span-12">
-          <h3>一括取り込み</h3>
-          <div class="form-grid">
-            <label>追加先シリーズ<select id="importSeries">${seriesOptions}</select></label>
-            <label class="check-row"><input id="importMerge" type="checkbox" checked> 同じ話タイトルがあれば同じ話にルート追加</label>
-            <label class="full">取り込みテキスト<textarea id="importText" rows="14" placeholder="=== NOVEL_IMPORT ===&#10;シリーズ: シリーズA&#10;章: 章A&#10;話数: 1&#10;タイトル: 第1話 タイトルA&#10;ルート: 本編&#10;種別: 本編&#10;タグ: #タグA #タグB&#10;&#10;--- 1ページ ---&#10;本文...&#10;&#10;--- 2ページ ---&#10;本文...&#10;=== END ==="></textarea></label>
-          </div>
-          <div class="toolbar">
-            <button class="ghost" data-action="import-preview">プレビュー</button>
-            <button class="primary" data-action="import-run">取り込み実行</button>
-          </div>
-          <div id="importPreview"></div>
-        </div>
-        <div class="card span-12">
-          <h3>ChatGPTに頼む時の言い方</h3>
-          <p class="muted">小説を書いてもらったあとに、こう言えばOKです。</p>
-          <div class="empty" style="text-align:left; align-items:flex-start;">
-            <code>保管庫取り込み形式もつけて</code>
-          </div>
-          <p class="micro muted">実際のシリーズ名・タグ名・内容は自分で指定できます。指定しない場合は、取り込み時に仮のシリーズへ入ります。</p>
-        </div>
-      </div>
-    `;
-    content.onclick = async (event) => {
-      const target = event.target.closest('button');
-      if (!target) return;
-      const raw = $('#importText', content).value;
-      if (target.dataset.action === 'import-preview') {
-        try {
-          const parsed = parseImportText(raw);
-          $('#importPreview', content).innerHTML = importPreviewHTML(parsed);
-        } catch (error) {
-          toastMessage(error.message || '読み取れませんでした。');
-        }
-      }
-      if (target.dataset.action === 'import-run') {
-        try {
-          const result = await importNovelFromText(raw, {
-            seriesId: $('#importSeries', content).value,
-            mergeSameTitle: $('#importMerge', content).checked
-          });
-          toastMessage('取り込みました。');
-          navigate('editor', { seriesId: result.series.id, entryId: result.entry.id, routeId: result.route.id });
-        } catch (error) {
-          toastMessage(error.message || '取り込みできませんでした。');
-        }
-      }
+        <div class="card span-12"><h3>取り込み設定</h3><div class="form-grid">
+          <label>追加先シリーズ<select id="importSeries">${seriesOptions}</select></label>
+          <label>新しいシリーズ名<input id="importNewSeries" value="${escapeHTML(opts.seriesTitle||'')}" placeholder="既存を選ばない場合"></label>
+          <label>章<select id="importChapter"><option value="">章なし</option>${chapters.map(c=>`<option value="${escapeHTML(c.title)}" ${opts.chapterTitle===c.title?'selected':''}>${escapeHTML(c.title)}</option>`).join('')}</select></label>
+          <label>ページ分け<select id="importPageMode"><option value="auto" ${opts.pageMode!=='one'?'selected':''}>場面転換を優先して自動</option><option value="one" ${opts.pageMode==='one'?'selected':''}>各話1ページ</option></select></label>
+          <label>話数<select id="importNumberMode"><option value="original" ${opts.numberMode==='original'?'selected':''}>元の話数を使う</option><option value="renumber" ${opts.numberMode!=='original'&&opts.numberMode!=='none'?'selected':''}>順番に振り直す</option><option value="none" ${opts.numberMode==='none'?'selected':''}>話数なし</option></select></label>
+          <label>開始話数<input id="importStartNumber" type="number" min="1" value="${Number(opts.startNumber)||1}"></label>
+          <label>重複時<select id="importDuplicateMode"><option value="route" ${opts.duplicateMode!=='skip'&&opts.duplicateMode!=='new'?'selected':''}>同じ話に別ルートとして追加</option><option value="skip" ${opts.duplicateMode==='skip'?'selected':''}>重複を飛ばす</option><option value="new" ${opts.duplicateMode==='new'?'selected':''}>別の話として追加</option></select></label>
+        </div></div>
+        <div class="card span-12"><h3>本文を貼り付け</h3><textarea id="importText" rows="18" placeholder="専用形式は不要です。タイトルと本文、または複数話をそのまま貼ってください。">${escapeHTML(draft.raw||'')}</textarea><div class="toolbar"><button class="primary" data-action="import-analyze">自動解析</button><button class="ghost" data-action="import-clear">下書きを消す</button></div><p class="import-draft-note">入力内容と解析結果は端末内に自動保存します。</p></div>
+        <div class="card span-12"><h3>解析結果</h3><div id="importPreview">${draft.parsed?.length?importPreviewHTML(draft.parsed,opts.seriesId||''):'<div class="empty">本文を貼って「自動解析」を押してください。</div>'}</div>${draft.parsed?.length?'<div class="toolbar"><button class="primary" data-action="import-run">選択した話を取り込む</button></div>':''}</div>
+        <div class="card span-12"><h3>キーワードからタグ候補</h3><p class="muted">1行に「キーワードA, キーワードB => #タグA」の形で登録します。実際の語句とタグは自分で入力してください。</p><textarea id="keywordRules" rows="7" placeholder="単語A, 単語B => #タグA">${escapeHTML(keywordRulesToText(state.settings.keywordRules))}</textarea><div class="toolbar"><button class="ghost" data-action="save-keyword-rules">ルール保存</button></div></div>
+        ${state.settings.importHistory.length?`<div class="card span-12"><h3>最近の取り込み</h3><div class="list">${state.settings.importHistory.slice(0,10).map(h=>`<div class="item"><p class="item-title">${escapeHTML(h.seriesTitle)}・${h.count}話</p><p class="item-sub">${formatDate(h.at)}</p></div>`).join('')}</div></div>`:''}
+      </div>`;
+
+    function readOptions(){return {seriesId:$('#importSeries',content)?.value||'',seriesTitle:$('#importNewSeries',content)?.value.trim()||'',chapterTitle:$('#importChapter',content)?.value||'',pageMode:$('#importPageMode',content)?.value||'auto',numberMode:$('#importNumberMode',content)?.value||'renumber',startNumber:Number($('#importStartNumber',content)?.value)||1,duplicateMode:$('#importDuplicateMode',content)?.value||'route'};}
+    async function saveDraft(){ensureImportSettings();state.settings.importDraft.raw=$('#importText',content)?.value||'';state.settings.importDraft.options=readOptions();await saveEncryptedState();}
+    content.oninput=async(event)=>{
+      const el=event.target;
+      if(el.id==='importText'||['importSeries','importNewSeries','importChapter','importPageMode','importNumberMode','importStartNumber','importDuplicateMode'].includes(el.id)) return saveDraft();
+      const index=Number(el.dataset.importField?el.dataset.index:el.dataset.index); if(!Number.isFinite(index)||!draft.parsed?.[index]) return;
+      const story=draft.parsed[index];
+      if(el.dataset.importField==='selected') story.selected=el.checked;
+      if(el.dataset.importField==='entryTitle') story.entryTitle=el.value;
+      if(el.dataset.importField==='episode') story.episode=el.value;
+      if(el.dataset.importField==='routeType'){story.routeType=el.value;if(story.routeTitle==='本編'||Object.values(routeTypeLabels).includes(story.routeTitle))story.routeTitle=routeTypeLabels[el.value];}
+      if(el.dataset.importField==='routeTitle') story.routeTitle=el.value;
+      if(el.dataset.importField==='tags') story.tags=parseTags(el.value);
+      if(el.hasAttribute('data-import-page')) story.pages[Number(el.dataset.page)].body=el.value;
+      state.settings.importDraft.parsed=draft.parsed; await saveEncryptedState();
+    };
+    content.onchange=(event)=>{ if(event.target.id==='importSeries'){const o=readOptions();state.settings.importDraft.options=o;renderImport();} };
+    content.onclick=async(event)=>{
+      const b=event.target.closest('button'); if(!b)return; const action=b.dataset.action;
+      try{
+        if(action==='import-analyze'){const options=readOptions();const stories=parseImportText($('#importText',content).value,{pageMode:options.pageMode});applyNumbering(stories,options.numberMode,options.startNumber);state.settings.importDraft={raw:$('#importText',content).value,parsed:stories,options};await saveEncryptedState();renderImport();}
+        if(action==='import-clear'){state.settings.importDraft={raw:'',parsed:[],options:{}};await saveEncryptedState();renderImport();}
+        if(action==='save-keyword-rules'){state.settings.keywordRules=keywordRulesFromText($('#keywordRules',content).value);await saveEncryptedState();toastMessage('タグ判定ルールを保存しました。');}
+        if(action==='import-remove'){draft.parsed.splice(Number(b.dataset.index),1);state.settings.importDraft.parsed=draft.parsed;await saveEncryptedState();renderImport();}
+        if(action==='import-merge-prev'){const i=Number(b.dataset.index);if(i>0){draft.parsed[i-1].pages.push(...draft.parsed[i].pages);draft.parsed.splice(i,1);await saveEncryptedState();renderImport();}}
+        if(action==='import-add-page'){const i=Number(b.dataset.index);draft.parsed[i].pages.push({title:`${draft.parsed[i].pages.length+1}ページ`,body:''});await saveEncryptedState();renderImport();}
+        if(action==='import-delete-page'){const i=Number(b.dataset.index),p=Number(b.dataset.page);if(draft.parsed[i].pages.length>1)draft.parsed[i].pages.splice(p,1);await saveEncryptedState();renderImport();}
+        if(action==='import-split-cursor'){const i=Number(b.dataset.index);const card=b.closest('[data-import-story]');const ta=card?.querySelector('textarea:focus')||card?.querySelector('textarea');if(!ta)return toastMessage('分割したいページの本文をタップし、カーソルを置いてください。');const p=Number(ta.dataset.page),pos=ta.selectionStart;if(!pos)return toastMessage('本文の途中にカーソルを置いてください。');const before=ta.value.slice(0,pos).trim(),after=ta.value.slice(pos).trim();if(!after)return;draft.parsed[i].pages[p].body=before;const cloned=JSON.parse(JSON.stringify(draft.parsed[i]));cloned.id=uid('import');cloned.entryTitle=`${cloned.entryTitle}（分割）`;cloned.pages=[{title:'1ページ',body:after},...draft.parsed[i].pages.slice(p+1)];draft.parsed[i].pages=draft.parsed[i].pages.slice(0,p+1);draft.parsed.splice(i+1,0,cloned);await saveEncryptedState();renderImport();}
+        if(action==='import-run'){const options=readOptions();const result=await importParsedStories(draft.parsed,options);toastMessage(`${result.imported}話を取り込みました。`);navigate('series',{seriesId:result.series.id});}
+      }catch(error){console.error(error);toastMessage(error.message||'処理に失敗しました。');}
     };
   }
 
