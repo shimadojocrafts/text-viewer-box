@@ -1225,6 +1225,21 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
     };
   }
 
+  function normalizeStateShape(rawState) {
+    const base = createInitialState();
+    const normalized = rawState && typeof rawState === 'object' ? rawState : base;
+    normalized.appVersion = normalized.appVersion || base.appVersion;
+    normalized.createdAt = normalized.createdAt || base.createdAt;
+    normalized.updatedAt = normalized.updatedAt || nowISO();
+    normalized.settings = { ...base.settings, ...(normalized.settings || {}) };
+    normalized.series = Array.isArray(normalized.series) ? normalized.series : [];
+    normalized.ideas = Array.isArray(normalized.ideas) ? normalized.ideas : [];
+    normalized.trash = Array.isArray(normalized.trash) ? normalized.trash : [];
+    normalized.writingLog = normalized.writingLog && typeof normalized.writingLog === 'object' ? normalized.writingLog : {};
+    if (!Object.prototype.hasOwnProperty.call(normalized, 'lastRead')) normalized.lastRead = null;
+    return normalized;
+  }
+
   function localDBKey(key) {
     return `${DB_NAME}_${STORE_NAME}_${key}`;
   }
@@ -1399,13 +1414,28 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
       const bundle = await getLocalEncryptedBundle();
       await cloudDocRef(user.uid).set({
         ...bundle,
+        ideaCount: Array.isArray(state?.ideas) ? state.ideas.length : 0,
+        syncSchema: 2,
         cloudUpdatedAt: window.firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
-      cloudMessage = 'クラウドへ保存しました。';
+      cloudMessage = `クラウドへ保存しました（ネタ帳 ${state.ideas.length}件を含む）。`;
       if (!options.silent) toastMessage(cloudMessage);
     } finally {
       cloudBusy = false;
       if (current.view === 'settings') renderSettings();
+    }
+  }
+
+  async function syncIdeasToCloudSilently() {
+    if (!isFirebaseConfigured() || !cloudUser || !window.navigator.onLine || cloudBusy) return false;
+    try {
+      await uploadCloudData({ silent: true });
+      cloudMessage = `ネタ帳を含めてクラウドへ保存しました（${state.ideas.length}件）。`;
+      return true;
+    } catch (error) {
+      console.warn('ネタ帳の自動クラウド同期に失敗しました。', error);
+      cloudMessage = 'ネタ帳は端末内に保存しました。クラウド同期は設定画面から再実行してください。';
+      return false;
     }
   }
 
@@ -1424,12 +1454,12 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
     let key = sessionKey;
     try {
       if (!localMeta || localMeta.salt !== remoteMeta.salt) throw new Error('passcode-needed');
-      return { key, data: JSON.parse(await decryptText(key, encrypted)), meta: remoteMeta, encrypted };
+      return { key, data: normalizeStateShape(JSON.parse(await decryptText(key, encrypted))), meta: remoteMeta, encrypted };
     } catch (error) {
       const pass = window.prompt('クラウド保存時に使っていたアプリのパスコードを入力してください。');
       if (!pass) throw new Error('クラウド復元をキャンセルしました。');
       key = await deriveKey(pass, remoteMeta.salt);
-      return { key, data: JSON.parse(await decryptText(key, encrypted)), meta: remoteMeta, encrypted };
+      return { key, data: normalizeStateShape(JSON.parse(await decryptText(key, encrypted))), meta: remoteMeta, encrypted };
     }
   }
 
@@ -1445,7 +1475,7 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
       sessionKey = result.key;
       state = result.data;
       await dbSet(STATE_KEY, result.encrypted);
-      cloudMessage = 'クラウドから取得しました。';
+      cloudMessage = `クラウドから取得しました（ネタ帳 ${state.ideas.length}件を含む）。`;
       toastMessage(cloudMessage);
       navigate('home');
     } finally {
@@ -1530,7 +1560,7 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
     sessionKey = key;
     const encrypted = await dbGet(STATE_KEY);
     if (encrypted) {
-      state = JSON.parse(await decryptText(key, encrypted));
+      state = normalizeStateShape(JSON.parse(await decryptText(key, encrypted)));
     } else {
       state = createInitialState();
       await saveEncryptedState(true);
@@ -3411,7 +3441,7 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
             <button class="primary" data-action="cloud-upload" ${!cloudUser || cloudBusy ? 'disabled' : ''}>クラウドへ保存</button>
             <button class="ghost" data-action="cloud-download" ${!cloudUser || cloudBusy ? 'disabled' : ''}>クラウドから取得</button>
           </div>
-          <p class="micro muted">クラウドには、アプリのパスコードで暗号化したデータを保存します。別端末で取得するときは、その時のアプリ用パスコードが必要です。</p>
+          <p class="micro muted">シリーズ・本文・設定・ネタ帳・ゴミ箱をまとめて、アプリのパスコードで暗号化して保存します。現在のネタ帳：${state.ideas.length}件。別端末で取得するときは、その時のアプリ用パスコードが必要です。</p>
         </div>
         <div class="card span-12">
           <h3>ロック・初期化</h3>
@@ -3620,8 +3650,9 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
         state.ideas.unshift(item);
       }
       await saveEncryptedState(true);
+      await syncIdeasToCloudSilently();
       closeModal();
-      toastMessage('保存しました。');
+      toastMessage('ネタ帳を保存しました。');
       render();
     };
   }
@@ -3645,6 +3676,7 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
       idea.status = 'complete';
       idea.updatedAt = nowISO();
       await saveEncryptedState(true);
+      await syncIdeasToCloudSilently();
       closeModal();
       navigate('editor', { seriesId: series.id, entryId: entry.id, routeId: entry.routes[0].id });
     };
@@ -3673,6 +3705,7 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
       idea.status = 'complete';
       idea.updatedAt = nowISO();
       await saveEncryptedState(true);
+      await syncIdeasToCloudSilently();
       closeModal();
       navigate('editor', { seriesId, entryId, routeId: route.id });
     };
@@ -3783,6 +3816,7 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
     addTrash('idea', idea.title, idea);
     state.ideas = state.ideas.filter((item) => item.id !== idea.id);
     await saveEncryptedState(true);
+    await syncIdeasToCloudSilently();
     render();
   }
 
@@ -3807,6 +3841,7 @@ label { display: grid; gap: 6px; font-weight: 850; font-size: 13px; }
     }
     state.trash = state.trash.filter((item) => item.id !== trashId);
     await saveEncryptedState(true);
+    if (trashItem.type === 'idea') await syncIdeasToCloudSilently();
     render();
   }
 
